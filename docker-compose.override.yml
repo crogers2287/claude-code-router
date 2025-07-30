@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  claude-code-router:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+    ports:
+      - "3002:3000"  # Additional debug port
+    command: ["npm", "run", "dev"]

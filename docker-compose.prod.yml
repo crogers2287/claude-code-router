@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  claude-code-router:
+    image: crogers2287/claude-code-router:latest
+    container_name: claude-code-router-prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "3457:3457"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - WEB_UI_PORT=3457
+      - LOG_LEVEL=info
+    volumes:
+      - ./config:/app/config:ro
+      - claude-router-data:/app/data
+      - claude-router-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - claude-router-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: claude-router-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - claude-code-router
+    networks:
+      - claude-router-network
+
+volumes:
+  claude-router-data:
+  claude-router-logs:
+
+networks:
+  claude-router-network:
+    driver: bridge

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  claude-code-router:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: claude-code-router
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - WEB_UI_PORT=3457
+    ports:
+      - "3000:3000"  # API Port
+      - "3457:3457"  # Web UI Port
+    volumes:
+      - ./config:/app/config:ro
+      - claude-router-data:/app/data
+      - claude-router-logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - claude-router-network
+    
+  # Optional: Nginx reverse proxy for web access
+  nginx:
+    image: nginx:alpine
+    container_name: claude-router-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl/certs:ro
+    depends_on:
+      - claude-code-router
+    restart: unless-stopped
+    networks:
+      - claude-router-network
+    profiles:
+      - with-nginx
+
+networks:
+  claude-router-network:
+    driver: bridge
+
+volumes:
+  claude-router-data:
+  claude-router-logs:

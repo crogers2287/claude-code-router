@@ -1,0 +1,38 @@
+{
+  "logLevel": "info",
+  "apiPort": 3000,
+  "webUIPort": 3457,
+  "HOST": "127.0.0.1",
+  "APIKEY": "",
+  "API_TIMEOUT_MS": 600000,
+  "Providers": [
+    {
+      "name": "openai",
+      "type": "openai",
+      "apiKey": "sk-your-openai-key",
+      "baseURL": "https://api.openai.com/v1",
+      "models": ["gpt-4", "gpt-3.5-turbo"]
+    },
+    {
+      "name": "claude",
+      "type": "anthropic", 
+      "apiKey": "sk-your-anthropic-key",
+      "baseURL": "https://api.anthropic.com/v1",
+      "models": ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"]
+    }
+  ],
+  "routes": {
+    "default": {
+      "provider": "claude",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "background": {
+      "provider": "openai",
+      "model": "gpt-3.5-turbo"
+    },
+    "think": {
+      "provider": "claude",
+      "model": "claude-3-5-sonnet-20241022"
+    }
+  }
+}
