@@ -1,0 +1,27 @@
+[Unit]
+Description=Claude Code Router - LLM routing service with Web UI
+After=network.target
+
+[Service]
+Type=simple
+User=crogers2287
+Group=crogers2287
+WorkingDirectory=/home/crogers2287/claude-code-router
+Environment="NODE_ENV=production"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/crogers2287/claude-code-router/start-service.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/crogers2287/.claude-code-router/logs/service.log
+StandardError=append:/home/crogers2287/.claude-code-router/logs/service-error.log
+
+# Service hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/crogers2287/.claude-code-router
+ReadWritePaths=/tmp
+
+[Install]
+WantedBy=multi-user.target

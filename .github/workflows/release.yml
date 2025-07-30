@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          body: |
+            ## Changes
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+            
+            ## Docker Image
+            ```bash
+docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+```
+            
+            ## Quick Start
+            ```bash
+curl -sSL https://raw.githubusercontent.com/musistudio/claude-code-router/main/install.sh | bash
+```
+          token: ${{ secrets.GITHUB_TOKEN }}
