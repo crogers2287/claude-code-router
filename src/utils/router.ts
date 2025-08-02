@@ -98,6 +98,11 @@ const getUseModel = async (req: any, tokenCount: number, config: any) => {
 };
 
 export const router = async (req: any, _res: any, config: any) => {
+  // Skip router processing for web UI routes and non-API requests
+  if (req.url?.startsWith('/ui') || req.url?.startsWith('/api') || !req.body || !req.body.messages) {
+    return;
+  }
+
   const { messages, system = [], tools }: MessageCreateParamsBase = req.body;
   try {
     const tokenCount = calculateTokenCount(

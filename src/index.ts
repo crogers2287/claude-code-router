@@ -6,6 +6,9 @@ import { initConfig, initDir } from "./utils";
 import { createServer } from "./server";
 import { router } from "./utils/router";
 import { apiKeyAuth } from "./middleware/auth";
+import { webuiRoutes } from "./routes/webui";
+import fastify from "fastify";
+import { writeFileSync } from "fs";
 import {
   cleanupPidFile,
   isServiceRunning,
@@ -44,6 +47,15 @@ async function run(options: RunOptions = {}) {
     return;
   }
 
+  // Add error handlers to catch unhandled errors
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+  });
+
   await initializeClaudeConfig();
   await initDir();
   const config = await initConfig();
@@ -73,6 +85,23 @@ async function run(options: RunOptions = {}) {
     cleanupPidFile();
     process.exit(0);
   });
+
+  // Handle SIGHUP to reload configuration
+  process.on("SIGHUP", async () => {
+    console.log("Received SIGHUP, reloading configuration...");
+    try {
+      const newConfig = await initConfig();
+      // Update server configuration
+      server.updateConfig({
+        providers: newConfig.Providers || newConfig.providers,
+        HOST: newConfig.HOST,
+        API_TIMEOUT_MS: newConfig.API_TIMEOUT_MS
+      });
+      console.log("✅ Configuration reloaded successfully");
+    } catch (error) {
+      console.error("❌ Failed to reload configuration:", error);
+    }
+  });
   console.log(HOST)
 
   // Use port from environment variable if set (for background process)
@@ -93,12 +122,49 @@ async function run(options: RunOptions = {}) {
       ),
     },
   });
+  // Create separate web UI server on port 3457
+  writeFileSync('/tmp/webui-debug.log', 'Starting web UI server setup\n', { flag: 'a' });
+  const webServer = fastify({ logger: true });
+  
+  // Register web UI routes on separate server
+  console.log("About to register web UI routes...");
+  try {
+    await webuiRoutes(webServer);
+    console.log("Web UI routes registered successfully");
+  } catch (error) {
+    console.error("Failed to register web UI routes:", error);
+    return;
+  }
+  
+  try {
+    const webHost = HOST || "127.0.0.1";
+    console.log(`Attempting to start Web UI server on ${webHost}:3457...`);
+    await webServer.listen({ port: 3457, host: webHost });
+    console.log(`🌐 Web UI server listening on http://${webHost}:3457/ui`);
+    
+    // Test that the server is actually responding after a brief delay
+    setTimeout(async () => {
+      try {
+        const response = await fetch(`http://${webHost}:3457/ui`);
+        console.log(`Web UI server health check: ${response.status}`);
+      } catch (error) {
+        console.error("Web UI server health check failed:", error.message);
+      }
+    }, 1000);
+    
+  } catch (error) {
+    console.error("Failed to start web UI server:", error);
+    console.error("Error details:", error.stack);
+    console.error("Error code:", error.code);
+  }
+  
   server.addHook("preHandler", apiKeyAuth(config));
-  server.addHook("preHandler", async (req, reply) => {
+  server.addHook("preHandler", async (req: any, reply: any) => {
     if(req.url.startsWith("/v1/messages")) {
       router(req, reply, config)
     }
   });
+  
   server.start();
 }
 

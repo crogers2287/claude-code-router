@@ -6,7 +6,10 @@
     "ccr": "./dist/cli.js"
   },
   "scripts": {
-    "build": "node scripts/build.js",
+    "build": "npm run build:server && npm run build:ui",
+    "build:server": "esbuild src/cli.ts --bundle --platform=node --outfile=dist/cli.js && shx cp node_modules/tiktoken/tiktoken_bg.wasm dist/tiktoken_bg.wasm",
+    "build:ui": "esbuild src/web/index.tsx --bundle --outfile=dist/web/bundle.js --loader:.css=text --loader:.svg=text --define:process.env.NODE_ENV=\\\"production\\\"",
+    "dev:ui": "esbuild src/web/index.tsx --bundle --outfile=dist/web/bundle.js --loader:.css=text --loader:.svg=text --define:process.env.NODE_ENV=\\\"development\\\" --watch",
     "release": "npm run build && npm publish"
   },
   "keywords": [
@@ -29,8 +32,12 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.15",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
     "esbuild": "^0.25.1",
     "fastify": "^5.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "shx": "^0.4.0",
     "typescript": "^5.8.2"
   },
