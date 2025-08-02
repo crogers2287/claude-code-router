@@ -140,11 +140,17 @@ const App: React.FC = () => {
       <div className="app">
         <header className="app-header">
           <div className="container">
-            <h1>
-              <span className="logo">⚡</span>
-              Claude Code Router
-            </h1>
-            <p>Loading your intelligent routing configuration...</p>
+            <div className="header-content">
+              <div className="logo-section">
+                <div className="app-logo">
+                  <span className="logo-fallback">⚡</span>
+                </div>
+              </div>
+              <div className="title-section">
+                <h1>Claude Code Router</h1>
+                <p>Loading your intelligent routing configuration...</p>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -230,11 +236,17 @@ const App: React.FC = () => {
       <div className="app">
         <header className="app-header">
           <div className="container">
-            <h1>
-              <span className="logo">⚡</span>
-              Claude Code Router
-            </h1>
-            <p>Intelligent LLM routing and configuration management</p>
+            <div className="header-content">
+              <div className="logo-section">
+                <div className="app-logo">
+                  <span className="logo-fallback">⚡</span>
+                </div>
+              </div>
+              <div className="title-section">
+                <h1>Claude Code Router</h1>
+                <p>Intelligent LLM routing and configuration management</p>
+              </div>
+            </div>
           </div>
         </header>
         
@@ -265,11 +277,97 @@ const App: React.FC = () => {
     <div className="app">
       <header className="app-header">
         <div className="container">
-          <h1>
-            <span className="logo">⚡</span>
-            Claude Code Router
-          </h1>
-          <p>Intelligent LLM routing and configuration management for modern AI workflows</p>
+          <div className="header-content">
+            <div className="logo-section">
+              {/* Use the actual uploaded logo */}
+              <img 
+                src="/logo.png" 
+                alt="Claude Code Router" 
+                className="app-logo"
+                onError={(e) => {
+                  // Fallback to custom SVG if logo not found
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'block';
+                }}
+              />
+              <div className="logo-fallback-svg" style={{ display: 'none' }}>
+                <svg 
+                  width="80" 
+                  height="80" 
+                  viewBox="0 0 100 100" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="logo-svg"
+                >
+                  <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#ffffff', stopOpacity: 1}} />
+                      <stop offset="50%" style={{stopColor: '#f8fafc', stopOpacity: 0.9}} />
+                      <stop offset="100%" style={{stopColor: '#e2e8f0', stopOpacity: 0.8}} />
+                    </linearGradient>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                      <feMerge> 
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  
+                  {/* Router/flow paths */}
+                  <path 
+                    d="M15 35 C25 25, 35 25, 45 35 C55 45, 65 45, 75 35" 
+                    stroke="url(#logoGradient)" 
+                    strokeWidth="4" 
+                    fill="none" 
+                    strokeLinecap="round"
+                    filter="url(#glow)"
+                  />
+                  <path 
+                    d="M15 65 C25 55, 35 55, 45 65 C55 75, 65 75, 75 65" 
+                    stroke="url(#logoGradient)" 
+                    strokeWidth="4" 
+                    fill="none" 
+                    strokeLinecap="round"
+                    filter="url(#glow)"
+                  />
+                  
+                  {/* Decision/routing nodes */}
+                  <circle cx="45" cy="35" r="6" fill="url(#logoGradient)" filter="url(#glow)" />
+                  <circle cx="45" cy="65" r="6" fill="url(#logoGradient)" filter="url(#glow)" />
+                  
+                  {/* Arrow indicators */}
+                  <path 
+                    d="M70 30 L80 35 L70 40" 
+                    stroke="url(#logoGradient)" 
+                    strokeWidth="3" 
+                    fill="none" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    filter="url(#glow)"
+                  />
+                  <path 
+                    d="M70 60 L80 65 L70 70" 
+                    stroke="url(#logoGradient)" 
+                    strokeWidth="3" 
+                    fill="none" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    filter="url(#glow)"
+                  />
+                  
+                  {/* Central hub/router indicator */}
+                  <circle cx="45" cy="50" r="4" fill="url(#logoGradient)" opacity="0.7" filter="url(#glow)" />
+                </svg>
+              </div>
+            </div>
+            <div className="title-section">
+              <h1>Claude Code Router</h1>
+              <p>Intelligent LLM routing and configuration management for modern AI workflows</p>
+            </div>
+          </div>
           
           <div className="save-status">
             {saveStatus === 'saving' && (

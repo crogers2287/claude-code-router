@@ -53,6 +53,32 @@ export async function webuiRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Serve logo
+  fastify.get('/logo.png', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const possiblePaths = [
+        join(__dirname, '../../logo.png'),
+        join(__dirname, '../logo.png'),
+        join(__dirname, 'logo.png'),
+        join(process.cwd(), 'logo.png'),
+        join(process.cwd(), 'dist/logo.png')
+      ];
+      
+      for (const logoPath of possiblePaths) {
+        if (existsSync(logoPath)) {
+          const logo = await readFile(logoPath);
+          reply.type('image/png').send(logo);
+          return;
+        }
+      }
+      
+      reply.code(404).send('Logo not found');
+    } catch (error) {
+      console.error('Error serving logo:', error);
+      reply.code(404).send('Logo not found');
+    }
+  });
+
   // Serve static assets
   fastify.get('/ui/bundle.js', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
