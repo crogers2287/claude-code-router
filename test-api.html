@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Testing Provider API</h1>
+    <button onclick="testProvider()">Test Provider API</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testProvider() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/test-provider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        provider: {
+                            name: 'test',
+                            api_base_url: 'https://api.openai.com',
+                            api_key: 'test-key',
+                            models: ['gpt-4']
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                resultEl.textContent = `Response Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
+</content>
