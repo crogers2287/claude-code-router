@@ -21,7 +21,43 @@
 
 ## 🚀 Getting Started
 
-### 1. Installation
+### 🐳 Quick Start with Docker (Recommended)
+
+For the easiest setup, use our automated Docker installation:
+
+```bash
+# Clone the repository
+git clone https://github.com/crogers2287/claude-code-router.git
+cd claude-code-router
+
+# Run the automated installer
+chmod +x install.sh
+./install.sh
+```
+
+The installer will:
+- ✅ Check prerequisites (Docker, Docker Compose)
+- ✅ Build the Docker image with Claude Code pre-installed
+- ✅ Create the `ccr` command on your system
+- ✅ Start both the router service (port 3456) and WebUI (port 3457)
+- ✅ Handle partial installations and conflicts automatically
+
+**Available Commands:**
+```bash
+ccr start      # Start the router service
+ccr stop       # Stop the router service
+ccr config     # Open WebUI configuration (http://localhost:3457/ui)
+ccr code       # Run Claude Code through the router
+ccr logs       # View service logs
+ccr status     # Check service status
+```
+
+**Uninstall:**
+```bash
+./uninstall.sh  # Removes everything (with option to keep config)
+```
+
+### 📦 Manual Installation
 
 First, ensure you have [Claude Code](https://docs.anthropic.com/en/docs/claude-code/quickstart) installed:
 
@@ -192,12 +228,24 @@ ccr ui
 
 This will open a web-based interface where you can easily manage providers, configure routing rules, and test your setup.
 
-#### Web UI Features
+#### 🎯 Enhanced Web UI Features
 
-- **Visual Provider Management**: Add, edit, and remove providers with a user-friendly interface
-- **Router Configuration**: Set up routing rules for different scenarios (default, background, thinking, long context, web search)
-- **Real-time Testing**: Test your configuration directly from the UI
-- **Command Generator**: Generate `ccr code` commands with custom model selection
+- **🔧 Visual Provider Management**: Add, edit, and remove providers with a user-friendly interface
+- **📊 Router Configuration**: Set up routing rules for different scenarios (default, background, thinking, long context, web search)
+- **🧪 Real-time Testing**: Test your configuration directly from the UI
+- **⚡ Command Generator**: Generate `ccr code` commands with custom model selection
+- **🦙 Ollama Integration**: Automatic model discovery for Ollama instances
+  - Detects Ollama URLs automatically (localhost:11434, etc.)
+  - One-click model discovery from your Ollama installation
+  - Beautiful model selection interface with visual indicators
+- **📤📥 Configuration Export/Import**: Backup and share your configurations
+  - Export complete configuration or providers only
+  - Import with smart merging (avoids duplicates)
+  - Automatic backup before importing
+- **🔍 Enhanced Model Validation**: Support for modern model names
+  - Allows periods (e.g., `glm-4.5`, `qwen2.5-coder`)
+  - Supports namespaced models (e.g., `anthropic/claude-3.5-sonnet`)
+  - Version tags (e.g., `model:latest`, `model:v1.0`)
 
 #### Screenshots
 
