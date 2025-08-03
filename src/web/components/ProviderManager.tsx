@@ -514,16 +514,30 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
   const discoverOllamaModels = async () => {
     setLoadingOllamaModels(true);
     try {
-      const ollamaUrl = formData.api_base_url.replace('/v1/chat/completions', '').replace('/api/chat', '');
-      const response = await fetch(`${ollamaUrl}/api/tags`);
+      // Use the backend API endpoint to avoid CORS issues
+      const response = await fetch('/api/get-provider-models', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider: {
+            api_base_url: formData.api_base_url,
+            api_key: formData.api_key || 'ollama'
+          }
+        })
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
-      const modelNames = data.models?.map((model: any) => model.name) || [];
-      setOllamaModels(modelNames);
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch models');
+      }
+      
+      setOllamaModels(result.models || []);
       setShowOllamaModels(true);
     } catch (error) {
       console.error('Failed to fetch Ollama models:', error);
