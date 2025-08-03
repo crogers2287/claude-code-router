@@ -254,23 +254,10 @@ case "\$1" in
         # Check authentication status by running a simple claude command
         if ! docker exec \$CONTAINER_NAME claude auth whoami >/dev/null 2>&1; then
             echo "⚠️  Claude Code is not authenticated."
-            echo "🔐 Running automatic login process..."
+            echo "🔐 Please run 'ccr login' first to authenticate with Claude."
             echo ""
-            
-            # Run the login process
-            docker exec -it \$CONTAINER_NAME claude auth login
-            
-            # Verify login succeeded
-            if docker exec \$CONTAINER_NAME claude auth whoami >/dev/null 2>&1; then
-                echo ""
-                echo "✅ Authentication successful!"
-                echo "🚀 Starting Claude Code..."
-                echo ""
-            else
-                echo ""
-                echo "❌ Authentication failed. Please try running 'ccr login' manually."
-                exit 1
-            fi
+            echo "Run: ccr login"
+            exit 1
         fi
         
         # Execute the command inside the container
