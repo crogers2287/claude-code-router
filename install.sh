@@ -102,10 +102,30 @@ setup_config_dir() {
 build_docker_image() {
     print_status "Building Docker image for Claude Code Router..."
     
-    if docker compose version &> /dev/null; then
-        docker compose build
+    # Check if image already exists
+    if docker images | grep -q claude-code-router; then
+        print_warning "Docker image already exists. Rebuilding..."
+    fi
+    
+    # Build with better error handling
+    if ! docker compose version &> /dev/null; then
+        if ! docker-compose build; then
+            print_error "Docker build failed. Trying to clean up and rebuild..."
+            # Clean up and try again
+            docker-compose down || true
+            docker system prune -f || true
+            print_info "Retrying build..."
+            docker-compose build
+        fi
     else
-        docker-compose build
+        if ! docker compose build; then
+            print_error "Docker build failed. Trying to clean up and rebuild..."
+            # Clean up and try again
+            docker compose down || true
+            docker system prune -f || true
+            print_info "Retrying build..."
+            docker compose build
+        fi
     fi
     
     print_status "Docker image built successfully"
@@ -139,7 +159,7 @@ cd "$PROJECT_DIR"
 
 # Function to ensure container is running
 ensure_container_running() {
-    if ! docker ps | grep -q claude-code-router; then
+    if ! docker ps --format "table {{.Names}}" | grep -q claude-code-router; then
         echo "Starting Claude Code Router container..."
         if docker compose version &> /dev/null; then
             docker compose up -d
@@ -151,6 +171,11 @@ ensure_container_running() {
         echo "Waiting for services to start..."
         sleep 5
     fi
+}
+
+# Function to get the actual container name (handles -1, -2 suffixes)
+get_container_name() {
+    docker ps --format "table {{.Names}}" | grep claude-code-router | head -1 | tr -d ' '
 }
 
 # Handle different commands
@@ -201,7 +226,8 @@ case "\$1" in
         ensure_container_running
         shift
         # Execute the command inside the container
-        docker exec -it claude-code-router node dist/cli.js code "\$@"
+        CONTAINER_NAME=\$(get_container_name)
+        docker exec -it \$CONTAINER_NAME node dist/cli.js code "\$@"
         ;;
     config)
         ensure_container_running
@@ -215,12 +241,14 @@ case "\$1" in
         ;;
     exec)
         shift
-        docker exec -it claude-code-router \$@
+        CONTAINER_NAME=\$(get_container_name)
+        docker exec -it \$CONTAINER_NAME \$@
         ;;
     *)
         # Pass through any other commands to the CLI inside the container
         ensure_container_running
-        docker exec -it claude-code-router node dist/cli.js "\$@"
+        CONTAINER_NAME=\$(get_container_name)
+        docker exec -it \$CONTAINER_NAME node dist/cli.js "\$@"
         ;;
 esac
 EOF
@@ -257,12 +285,130 @@ start_services() {
     fi
 }
 
+# Function to prompt user for continuation
+prompt_continue() {
+    read -p "Continue with installation? (y/n): " choice
+    case $choice in
+        y|Y)
+            return 0
+            ;;
+        *)
+            echo "Installation cancelled."
+            exit 0
+            ;;
+    esac
+}
+
+# Handle partial installation
+handle_partial_install() {
+    # Check if we have a partial installation
+    CONFIG_DIR="$HOME/.claude-code-router"
+    WRAPPER_DIR="/usr/local/bin"
+    WRAPPER_PATH="$WRAPPER_DIR/ccr"
+    
+    PARTIAL_INSTALL_FOUND=false
+    
+    # Check various indicators of partial installation
+    if [ -f "$WRAPPER_PATH" ]; then
+        print_warning "ccr command already exists at $WRAPPER_PATH"
+        PARTIAL_INSTALL_FOUND=true
+    fi
+    
+    if [ -d "$CONFIG_DIR" ]; then
+        print_warning "Configuration directory already exists at $CONFIG_DIR"
+        PARTIAL_INSTALL_FOUND=true
+    fi
+    
+    if docker images | grep -q claude-code-router; then
+        print_warning "Docker image already exists"
+        PARTIAL_INSTALL_FOUND=true
+    fi
+    
+    if [ "$PARTIAL_INSTALL_FOUND" = true ]; then
+        echo
+        print_info "A partial installation was detected."
+        echo "Please choose an option:"
+        echo "  1. Continue where we left off (recommended)"
+        echo "  2. Start fresh (remove existing installation)"
+        echo "  3. Exit without making changes"
+        
+        while true; do
+            read -p "Enter your choice (1-3): " choice
+            case $choice in
+                1)
+                    print_status "Continuing with existing installation..."
+                    if docker images | grep -q claude-code-router; then
+                        read -p "Skip Docker build? (y/n): " skip_build
+                        if [[ $skip_build =~ ^[Yy]$ ]]; then
+                            export SKIP_BUILD=true
+                        fi
+                    fi
+                    return 0
+                    ;;
+                2)
+                    print_status "Removing existing installation..."
+                    # Remove wrapper
+                    if [ -f "$WRAPPER_PATH" ]; then
+                        if [ -w "$WRAPPER_DIR" ]; then
+                            rm -f "$WRAPPER_PATH"
+                        else
+                            sudo rm -f "$WRAPPER_PATH"
+                        fi
+                    fi
+                    
+                    # Remove config (ask first)
+                    if [ -d "$CONFIG_DIR" ]; then
+                        read -p "Keep configuration files? (y/n): " keep_config
+                        if [[ $keep_config =~ ^[Nn]$ ]]; then
+                            rm -rf "$CONFIG_DIR"
+                        fi
+                    fi
+                    
+                    # Stop containers
+                    if docker compose version &> /dev/null; then
+                        docker compose down 2>/dev/null || true
+                    else
+                        docker-compose down 2>/dev/null || true
+                    fi
+                    
+                    # Remove Docker image
+                    docker rmi -f claude-code-router 2>/dev/null || true
+                    
+                    print_status "Old installation removed"
+                    return 0
+                    ;;
+                3)
+                    echo "Exiting without changes."
+                    exit 0
+                    ;;
+                *)
+                    echo "Invalid choice. Please enter 1, 2, or 3."
+                    ;;
+            esac
+        done
+    fi
+}
+
 # Main installation flow
 main() {
     echo "=================================="
     echo "Claude Code Router Installation"
     echo "=================================="
+    print_info "This script will:"
+    echo "  1. Check system requirements"
+    echo "  2. Build Docker image"
+    echo "  3. Create configuration directory"
+    echo "  4. Install ccr command"
+    echo "  5. Start services"
     echo
+    
+    # Handle partial installation if it exists
+    handle_partial_install
+    
+    # Allow user to continue
+    if ! prompt_continue; then
+        exit 0
+    fi
     
     # Check prerequisites
     detect_os
@@ -270,8 +416,8 @@ main() {
     check_claude_code
     
     # Setup
+    [ "$SKIP_BUILD" != true ] && build_docker_image
     setup_config_dir
-    build_docker_image
     create_ccr_wrapper
     start_services
     

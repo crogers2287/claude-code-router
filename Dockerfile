@@ -18,6 +18,9 @@ COPY . .
 # Build the project
 RUN pnpm run build
 
+# Ensure logo.png is in dist folder after build
+RUN cp logo.png dist/logo.png || true
+
 # Production stage
 FROM node:18-alpine
 
@@ -41,6 +44,7 @@ COPY --from=builder /app/dist ./dist
 COPY config.example.json ./
 COPY docker-config.json ./
 COPY docker-entrypoint.sh ./
+COPY logo.png ./
 
 # Make entrypoint script executable
 RUN chmod +x docker-entrypoint.sh

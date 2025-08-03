@@ -1,6 +1,7 @@
 services:
   claude-code-router:
     build: .
+    container_name: claude-code-router
     ports:
       - "3456:3456"
       - "3457:3457"
