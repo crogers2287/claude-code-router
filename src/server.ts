@@ -51,6 +51,137 @@ export const createServer = (config: any): Server => {
     }, 1000);
   });
 
+  // Add endpoint to export configuration
+  server.app.get("/api/export/config", async (_, reply) => {
+    try {
+      const config = await readConfigFile();
+      reply.type('application/json').send(config);
+    } catch (error) {
+      reply.code(500).send({ 
+        error: 'Failed to export configuration',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Add endpoint to export providers only
+  server.app.get("/api/export/providers", async (_, reply) => {
+    try {
+      const config = await readConfigFile();
+      const providersData = { Providers: config.Providers || [] };
+      reply.type('application/json').send(providersData);
+    } catch (error) {
+      reply.code(500).send({ 
+        error: 'Failed to export providers',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Add endpoint to import configuration
+  server.app.post("/api/import/config", async (req, reply) => {
+    try {
+      const importedConfig = req.body;
+      
+      // Validate the imported config has required structure
+      if (!importedConfig.Providers || !Array.isArray(importedConfig.Providers)) {
+        return reply.code(400).send({
+          error: 'Invalid configuration: missing or invalid Providers array'
+        });
+      }
+      
+      // Get current config to preserve server settings
+      const currentConfig = await readConfigFile();
+      
+      // Merge configurations, preserving critical server settings
+      const mergedConfig = {
+        ...currentConfig,
+        ...importedConfig,
+        // Preserve critical server settings
+        APIKEY: currentConfig.APIKEY,
+        HOST: currentConfig.HOST,
+        API_TIMEOUT_MS: importedConfig.API_TIMEOUT_MS || currentConfig.API_TIMEOUT_MS
+      };
+      
+      // Backup existing config
+      const { backupConfigFile } = await import("./utils");
+      const backupPath = await backupConfigFile();
+      if (backupPath) {
+        console.log(`Backed up existing configuration to ${backupPath}`);
+      }
+      
+      await writeConfigFile(mergedConfig);
+      reply.send({ 
+        success: true, 
+        message: "Configuration imported successfully",
+        backupPath
+      });
+    } catch (error) {
+      reply.code(500).send({ 
+        error: 'Failed to import configuration',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Add endpoint to import providers
+  server.app.post("/api/import/providers", async (req, reply) => {
+    try {
+      const importedData = req.body;
+      let providersToImport: any[] = [];
+      
+      // Handle different import formats
+      if (importedData.Providers && Array.isArray(importedData.Providers)) {
+        providersToImport = importedData.Providers;
+      } else if (Array.isArray(importedData)) {
+        providersToImport = importedData;
+      } else {
+        return reply.code(400).send({
+          error: 'Invalid format: Expected JSON with Providers array or array of providers'
+        });
+      }
+      
+      // Validate provider structure
+      const isValid = providersToImport.every(provider => 
+        provider.name && provider.api_base_url && Array.isArray(provider.models)
+      );
+      
+      if (!isValid) {
+        return reply.code(400).send({
+          error: 'Invalid provider data: Each provider must have name, api_base_url, and models array'
+        });
+      }
+      
+      // Get current config
+      const currentConfig = await readConfigFile();
+      
+      // Merge with existing providers (avoiding duplicates by name)
+      const existingNames = new Set(currentConfig.Providers.map((p: any) => p.name));
+      const uniqueImported = providersToImport.filter(p => !existingNames.has(p.name));
+      const newProviders = [...currentConfig.Providers, ...uniqueImported];
+      
+      const newConfig = { ...currentConfig, Providers: newProviders };
+      
+      // Backup existing config
+      const { backupConfigFile } = await import("./utils");
+      const backupPath = await backupConfigFile();
+      
+      await writeConfigFile(newConfig);
+      reply.send({ 
+        success: true, 
+        message: `Imported ${uniqueImported.length} new providers (${providersToImport.length - uniqueImported.length} duplicates skipped)`,
+        backupPath,
+        imported: uniqueImported.length,
+        skipped: providersToImport.length - uniqueImported.length
+      });
+    } catch (error) {
+      reply.code(500).send({ 
+        error: 'Failed to import providers',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Register static file serving with caching
   server.app.register(fastifyStatic, {
     root: join(__dirname, "..", "dist"),

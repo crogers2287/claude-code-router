@@ -191,7 +191,10 @@ export async function webuiRoutes(fastify: FastifyInstance) {
 
       // Warnings for common issues
       if (!provider.api_key || provider.api_key.trim() === '') {
-        warnings.push('No API key provided - some providers may require authentication');
+        // Check if this might be Ollama (which doesn't require an API key)
+        if (!provider.api_base_url.includes('localhost') && !provider.api_base_url.includes('11434')) {
+          warnings.push('No API key provided - some providers may require authentication');
+        }
       }
 
       if (provider.api_base_url && provider.api_base_url.startsWith('http://')) {

@@ -95,20 +95,186 @@ export const ProviderManager: React.FC<ProviderManagerProps> = ({ config, onSave
     }
   };
 
+  const exportConfig = () => {
+    const dataStr = JSON.stringify(config, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `claude-code-router-config-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportProviders = () => {
+    const providersData = { Providers: config.Providers };
+    const dataStr = JSON.stringify(providersData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `claude-code-router-providers-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const importConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedConfig = JSON.parse(e.target?.result as string);
+        
+        // Validate the imported config has required structure
+        if (!importedConfig.Providers || !Array.isArray(importedConfig.Providers)) {
+          alert('Invalid configuration file: missing or invalid Providers array');
+          return;
+        }
+        
+        if (confirm('This will replace your current configuration. Are you sure you want to continue?')) {
+          // Merge with current config to preserve server settings
+          const mergedConfig = {
+            ...config,
+            ...importedConfig,
+            // Preserve critical server settings
+            APIKEY: config.APIKEY,
+            HOST: config.HOST,
+            API_TIMEOUT_MS: importedConfig.API_TIMEOUT_MS || config.API_TIMEOUT_MS
+          };
+          onSave(mergedConfig);
+        }
+      } catch (error) {
+        alert('Error parsing configuration file. Please check the file format.');
+        console.error('Import error:', error);
+      }
+    };
+    reader.readAsText(file);
+    // Reset input value so same file can be selected again
+    event.target.value = '';
+  };
+
+  const importProviders = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target?.result as string);
+        let providersToImport: Provider[] = [];
+        
+        // Handle different import formats
+        if (importedData.Providers && Array.isArray(importedData.Providers)) {
+          providersToImport = importedData.Providers;
+        } else if (Array.isArray(importedData)) {
+          providersToImport = importedData;
+        } else {
+          alert('Invalid file format. Expected JSON with Providers array or array of providers.');
+          return;
+        }
+        
+        // Validate provider structure
+        const isValid = providersToImport.every(provider => 
+          provider.name && provider.api_base_url && Array.isArray(provider.models)
+        );
+        
+        if (!isValid) {
+          alert('Invalid provider data. Each provider must have name, api_base_url, and models array.');
+          return;
+        }
+        
+        const action = confirm(
+          `Import ${providersToImport.length} provider(s)?\n\n` +
+          `Click OK to REPLACE current providers, or Cancel to MERGE with existing providers.`
+        );
+        
+        if (action === null) return; // User cancelled
+        
+        let newProviders: Provider[];
+        if (action) {
+          // Replace existing providers
+          newProviders = providersToImport;
+        } else {
+          // Merge with existing providers (avoiding duplicates by name)
+          const existingNames = new Set(config.Providers.map(p => p.name));
+          const uniqueImported = providersToImport.filter(p => !existingNames.has(p.name));
+          newProviders = [...config.Providers, ...uniqueImported];
+        }
+        
+        const newConfig = { ...config, Providers: newProviders };
+        onSave(newConfig);
+      } catch (error) {
+        alert('Error parsing providers file. Please check the file format.');
+        console.error('Import error:', error);
+      }
+    };
+    reader.readAsText(file);
+    // Reset input value so same file can be selected again
+    event.target.value = '';
+  };
+
   return (
     <div className="card">
       <div className="card-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2>Provider Management</h2>
             <p>Configure LLM providers and their models</p>
           </div>
-          <button 
-            className="btn btn-primary" 
-            onClick={() => setShowAddForm(true)}
-          >
-            ➕ Add Provider
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {/* Export/Import Buttons */}
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <button 
+                className="btn btn-secondary btn-small" 
+                onClick={exportProviders}
+                title="Export only providers"
+              >
+                📤 Export Providers
+              </button>
+              <button 
+                className="btn btn-secondary btn-small" 
+                onClick={exportConfig}
+                title="Export complete configuration"
+              >
+                📦 Export Config
+              </button>
+            </div>
+            
+            {/* Import Buttons */}
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <label className="btn btn-secondary btn-small" style={{ cursor: 'pointer' }}>
+                📥 Import Providers
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importProviders}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <label className="btn btn-secondary btn-small" style={{ cursor: 'pointer' }}>
+                📦 Import Config
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importConfig}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+            
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setShowAddForm(true)}
+            >
+              ➕ Add Provider
+            </button>
+          </div>
         </div>
       </div>
       <div className="card-content">
@@ -238,6 +404,9 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
   const [isValidating, setIsValidating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [validationProgress, setValidationProgress] = useState(0);
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [loadingOllamaModels, setLoadingOllamaModels] = useState(false);
+  const [showOllamaModels, setShowOllamaModels] = useState(false);
 
   // Client-side validation
   const validateField = (name: string, value: string) => {
@@ -271,7 +440,8 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
       
       case 'api_key':
         // API key validation is optional but if provided, should have minimum length
-        if (value && value.length < 10) {
+        // Special case for Ollama which doesn't require an API key
+        if (value && value !== 'ollama' && value.length < 10) {
           fieldErrors.push('API key seems too short (minimum 10 characters)');
         }
         break;
@@ -290,6 +460,11 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
       models.forEach((model, index) => {
         if (model.length < 2) {
           fieldErrors.push(`Model ${index + 1}: Name too short (minimum 2 characters)`);
+        }
+        // Allow periods, hyphens, underscores, colons, slashes in model names
+        // This supports models like "glm-4.5", "qwen2.5-coder:latest", "anthropic/claude-3.5-sonnet"
+        if (!/^[a-zA-Z0-9._\-:\/]+$/.test(model)) {
+          fieldErrors.push(`Model ${index + 1}: "${model}" contains invalid characters. Only letters, numbers, periods, hyphens, underscores, colons, and slashes are allowed.`);
         }
       });
       
@@ -333,6 +508,44 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
     setTouched(prev => ({ ...prev, models: true }));
     const fieldErrors = validateModels(modelsText);
     setErrors(prev => ({ ...prev, models: fieldErrors }));
+  };
+
+  // Discover Ollama models
+  const discoverOllamaModels = async () => {
+    setLoadingOllamaModels(true);
+    try {
+      const ollamaUrl = formData.api_base_url.replace('/v1/chat/completions', '').replace('/api/chat', '');
+      const response = await fetch(`${ollamaUrl}/api/tags`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const modelNames = data.models?.map((model: any) => model.name) || [];
+      setOllamaModels(modelNames);
+      setShowOllamaModels(true);
+    } catch (error) {
+      console.error('Failed to fetch Ollama models:', error);
+      alert(`Failed to discover Ollama models: ${error.message}\n\nMake sure Ollama is running and accessible at: ${formData.api_base_url}`);
+    } finally {
+      setLoadingOllamaModels(false);
+    }
+  };
+
+  // Add selected Ollama models to the text area
+  const addOllamaModel = (modelName: string) => {
+    const currentModels = modelsText.split('\n').filter(m => m.trim()).map(m => m.trim());
+    if (!currentModels.includes(modelName)) {
+      const newModelsText = currentModels.concat(modelName).join('\n');
+      setModelsText(newModelsText);
+      handleModelsChange(newModelsText);
+    }
+  };
+
+  // Check if URL looks like Ollama
+  const isOllamaUrl = (url: string) => {
+    return url.includes('11434') || url.includes('ollama') || url.includes('localhost');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -525,7 +738,7 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
           </div>
         )}
         <div className="form-help">
-          Leave empty if the provider doesn't require authentication
+          Leave empty if the provider doesn't require authentication. For Ollama, use "ollama" as the API key.
         </div>
       </div>
 
@@ -564,6 +777,254 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
           </div>
         )}
       </div>
+
+      {/* Ollama Model Discovery */}
+      {isOllamaUrl(formData.api_base_url) && (
+        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ 
+            background: 'linear-gradient(135deg, var(--primary-50) 0%, var(--gray-50) 100%)',
+            border: '1px solid var(--primary-200)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            backdropFilter: 'blur(10px)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Glassmorphism overlay */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
+              pointerEvents: 'none'
+            }} />
+            
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem',
+                marginBottom: '1rem'
+              }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, var(--primary-500), var(--primary-600))',
+                  borderRadius: '8px',
+                  padding: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ fontSize: '1.25rem' }}>🦙</span>
+                </div>
+                <div>
+                  <h4 style={{ 
+                    color: 'var(--gray-800)', 
+                    fontWeight: '600',
+                    fontSize: '1.1rem',
+                    margin: 0
+                  }}>
+                    Ollama Model Discovery
+                  </h4>
+                  <p style={{ 
+                    color: 'var(--gray-600)', 
+                    fontSize: '0.875rem',
+                    margin: 0,
+                    marginTop: '0.25rem'
+                  }}>
+                    Automatically discover and add models from your Ollama instance
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary btn-small"
+                onClick={discoverOllamaModels}
+                disabled={loadingOllamaModels}
+                style={{ 
+                  marginBottom: showOllamaModels ? '1.5rem' : '0',
+                  background: loadingOllamaModels ? 'var(--gray-400)' : undefined,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {loadingOllamaModels ? (
+                  <>
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid var(--gray-300)',
+                      borderTop: '2px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Discovering Models...
+                  </>
+                ) : (
+                  <>
+                    🔍 Discover Ollama Models
+                  </>
+                )}
+              </button>
+
+              {/* Model Selection Grid */}
+              {showOllamaModels && (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.6)',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  backdropFilter: 'blur(5px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    marginBottom: '1rem'
+                  }}>
+                    <h5 style={{ 
+                      color: 'var(--gray-800)', 
+                      fontWeight: '600',
+                      margin: 0,
+                      fontSize: '1rem'
+                    }}>
+                      Available Models ({ollamaModels.length})
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => setShowOllamaModels(false)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--gray-500)',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        borderRadius: '4px',
+                        fontSize: '1.25rem',
+                        lineHeight: 1
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  {ollamaModels.length === 0 ? (
+                    <div style={{
+                      textAlign: 'center',
+                      color: 'var(--gray-500)',
+                      padding: '2rem',
+                      fontStyle: 'italic'
+                    }}>
+                      No models found. Make sure Ollama is running and has models installed.
+                    </div>
+                  ) : (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
+                      gap: '0.75rem'
+                    }}>
+                      {ollamaModels.map((model, index) => {
+                        const isAlreadySelected = modelsText.split('\n')
+                          .filter(m => m.trim())
+                          .map(m => m.trim())
+                          .includes(model);
+                        
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => addOllamaModel(model)}
+                            disabled={isAlreadySelected}
+                            style={{
+                              background: isAlreadySelected 
+                                ? 'linear-gradient(135deg, var(--success-50), var(--success-100))'
+                                : 'linear-gradient(135deg, var(--gray-50), white)',
+                              border: isAlreadySelected 
+                                ? '2px solid var(--success-300)'
+                                : '2px solid var(--gray-200)',
+                              borderRadius: '8px',
+                              padding: '0.875rem',
+                              textAlign: 'left',
+                              cursor: isAlreadySelected ? 'default' : 'pointer',
+                              transition: 'all 0.2s ease',
+                              backdropFilter: 'blur(5px)',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isAlreadySelected) {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                                e.currentTarget.style.borderColor = 'var(--primary-300)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isAlreadySelected) {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                                e.currentTarget.style.borderColor = 'var(--gray-200)';
+                              }
+                            }}
+                          >
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '0.75rem' 
+                            }}>
+                              <div style={{
+                                background: isAlreadySelected 
+                                  ? 'var(--success-500)'
+                                  : 'linear-gradient(135deg, var(--primary-400), var(--primary-500))',
+                                borderRadius: '6px',
+                                padding: '0.375rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minWidth: '32px',
+                                height: '32px'
+                              }}>
+                                <span style={{ 
+                                  fontSize: '1rem',
+                                  color: 'white'
+                                }}>
+                                  {isAlreadySelected ? '✓' : '🤖'}
+                                </span>
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ 
+                                  color: 'var(--gray-800)', 
+                                  fontWeight: '500',
+                                  fontSize: '0.875rem',
+                                  wordBreak: 'break-all',
+                                  lineHeight: '1.3'
+                                }}>
+                                  {model}
+                                </div>
+                                <div style={{ 
+                                  color: isAlreadySelected ? 'var(--success-600)' : 'var(--gray-500)', 
+                                  fontSize: '0.75rem',
+                                  marginTop: '0.25rem',
+                                  fontWeight: '500'
+                                }}>
+                                  {isAlreadySelected ? 'Already added' : 'Click to add'}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Advanced Options Toggle */}
       <div className="form-group">
