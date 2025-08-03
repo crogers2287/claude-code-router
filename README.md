@@ -52,10 +52,16 @@ ccr status     # Check service status
 ```
 
 **First-time Setup:**
-After installation, you'll need to authenticate with Claude Code:
+The first time you run `ccr code`, it will automatically prompt you to login:
 ```bash
-ccr login
+ccr code    # Automatically handles login if needed
 ```
+
+You can also login manually:
+```bash
+ccr login   # Manual login command
+```
+
 Your authentication will be saved in `~/.claude` and persist across container restarts.
 
 **Uninstall:**

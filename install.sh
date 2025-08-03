@@ -247,8 +247,33 @@ case "\$1" in
     code)
         ensure_container_running
         shift
-        # Execute the command inside the container
+        
+        # Check if Claude is authenticated, if not, prompt for login
         CONTAINER_NAME=\$(get_container_name)
+        
+        # Check authentication status by running a simple claude command
+        if ! docker exec \$CONTAINER_NAME claude auth whoami >/dev/null 2>&1; then
+            echo "⚠️  Claude Code is not authenticated."
+            echo "🔐 Running automatic login process..."
+            echo ""
+            
+            # Run the login process
+            docker exec -it \$CONTAINER_NAME claude auth login
+            
+            # Verify login succeeded
+            if docker exec \$CONTAINER_NAME claude auth whoami >/dev/null 2>&1; then
+                echo ""
+                echo "✅ Authentication successful!"
+                echo "🚀 Starting Claude Code..."
+                echo ""
+            else
+                echo ""
+                echo "❌ Authentication failed. Please try running 'ccr login' manually."
+                exit 1
+            fi
+        fi
+        
+        # Execute the command inside the container
         docker exec -it \$CONTAINER_NAME node dist/cli.js code "\$@"
         ;;
     config)
