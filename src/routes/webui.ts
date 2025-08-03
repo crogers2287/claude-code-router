@@ -164,8 +164,8 @@ export async function webuiRoutes(fastify: FastifyInstance) {
       // Required fields
       if (!provider.name || provider.name.trim() === '') {
         errors.push('Provider name is required');
-      } else if (!/^[a-zA-Z0-9_-]+$/.test(provider.name)) {
-        errors.push('Provider name can only contain letters, numbers, hyphens, and underscores');
+      } else if (!/^[a-zA-Z0-9._-]+$/.test(provider.name)) {
+        errors.push('Provider name can only contain letters, numbers, dots, hyphens, and underscores');
       }
       
       if (!provider.api_base_url || provider.api_base_url.trim() === '') {

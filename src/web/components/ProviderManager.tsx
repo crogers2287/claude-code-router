@@ -238,6 +238,9 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
   const [isValidating, setIsValidating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [validationProgress, setValidationProgress] = useState(0);
+  const [loadingOllamaModels, setLoadingOllamaModels] = useState(false);
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [showOllamaModels, setShowOllamaModels] = useState(false);
 
   // Client-side validation
   const validateField = (name: string, value: string) => {
@@ -333,6 +336,58 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
     setTouched(prev => ({ ...prev, models: true }));
     const fieldErrors = validateModels(modelsText);
     setErrors(prev => ({ ...prev, models: fieldErrors }));
+  };
+
+  // Discover Ollama models
+  const discoverOllamaModels = async () => {
+    setLoadingOllamaModels(true);
+    try {
+      // Use the backend API endpoint to avoid CORS issues
+      const response = await fetch('/api/get-provider-models', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider: {
+            api_base_url: formData.api_base_url,
+            api_key: formData.api_key || 'ollama'
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch models');
+      }
+      
+      setOllamaModels(result.models || []);
+      setShowOllamaModels(true);
+    } catch (error) {
+      console.error('Failed to fetch Ollama models:', error);
+      alert(`Failed to discover Ollama models: ${error.message}\n\nMake sure Ollama is running and accessible at: ${formData.api_base_url}`);
+    } finally {
+      setLoadingOllamaModels(false);
+    }
+  };
+
+  // Add selected Ollama models to the text area
+  const addOllamaModel = (modelName: string) => {
+    const currentModels = modelsText.split('\n').filter(m => m.trim()).map(m => m.trim());
+    if (!currentModels.includes(modelName)) {
+      const newModelsText = currentModels.concat(modelName).join('\n');
+      setModelsText(newModelsText);
+      handleModelsChange(newModelsText);
+    }
+  };
+
+  // Check if URL looks like Ollama
+  const isOllamaUrl = (url: string) => {
+    return url.includes('11434') || url.includes('ollama') || url.includes('localhost');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -561,6 +616,40 @@ const ProviderForm: React.FC<ProviderFormProps> = ({ provider, onSave, onCancel 
         {!hasFieldError('models') && !isFieldValid('models') && (
           <div className="form-help">
             Enter each model name on a separate line
+          </div>
+        )}
+        
+        {/* Ollama model discovery */}
+        {isOllamaUrl(formData.api_base_url) && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-small"
+              onClick={discoverOllamaModels}
+              disabled={loadingOllamaModels || isValidating}
+            >
+              {loadingOllamaModels ? '🔄 Discovering...' : '🔍 Discover Ollama Models'}
+            </button>
+            
+            {showOllamaModels && ollamaModels.length > 0 && (
+              <div className="ollama-models-list" style={{ marginTop: '1rem' }}>
+                <div className="form-help">Click to add models:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  {ollamaModels.map((model) => (
+                    <button
+                      key={model}
+                      type="button"
+                      className="model-tag"
+                      onClick={() => addOllamaModel(model)}
+                      style={{ cursor: 'pointer' }}
+                      title={`Add ${model}`}
+                    >
+                      + {model}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
