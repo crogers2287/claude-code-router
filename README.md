@@ -37,14 +37,14 @@ The installer will:
 - ✅ Check prerequisites (Docker, Docker Compose)
 - ✅ Build the Docker image with Claude Code pre-installed
 - ✅ Create the `ccr` command on your system
-- ✅ Start both the router service (port 3456) and WebUI (port 3457)
+- ✅ Start both the router service (port 3458) and WebUI (port 3459)
 - ✅ Handle partial installations and conflicts automatically
 
 **Available Commands:**
 ```bash
 ccr start      # Start the router service
 ccr stop       # Stop the router service  
-ccr config     # Open WebUI configuration (http://localhost:3457/ui)
+ccr config     # Open WebUI configuration (http://localhost:3459/ui)
 ccr code       # Run Claude Code through the router
 ccr logs       # View service logs
 ccr status     # Check service status
@@ -56,7 +56,7 @@ No authentication required! The router handles all API authentication using conf
 ccr code    # Ready to use immediately after installation
 ```
 
-Configure your providers and API keys using the WebUI at `http://localhost:3457/ui`
+Configure your providers and API keys using the WebUI at `http://localhost:3459/ui`
 
 **Uninstall:**
 ```bash

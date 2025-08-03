@@ -3,8 +3,8 @@ services:
     build: .
     container_name: claude-code-router
     ports:
-      - "3456:3456"
-      - "3457:3457"
+      - "3458:3456"
+      - "3459:3457"
     volumes:
       - ~/.claude-code-router:/root/.claude-code-router
       - ~/.claude:/root/.claude

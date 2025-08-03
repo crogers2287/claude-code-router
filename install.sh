@@ -262,9 +262,9 @@ case "\$1" in
         echo "Opening configuration interface..."
         # Detect OS and open browser
         if [[ "\$OSTYPE" == "linux-gnu"* ]]; then
-            xdg-open "http://localhost:3457/ui" 2>/dev/null || echo "Please open http://localhost:3457/ui in your browser"
+            xdg-open "http://localhost:3459/ui" 2>/dev/null || echo "Please open http://localhost:3459/ui in your browser"
         elif [[ "\$OSTYPE" == "darwin"* ]]; then
-            open "http://localhost:3457/ui"
+            open "http://localhost:3459/ui"
         fi
         ;;
     login)
