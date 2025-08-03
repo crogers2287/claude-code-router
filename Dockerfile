@@ -52,8 +52,8 @@ RUN mkdir -p /root/.claude-code-router
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:3456/ || exit 1
 
-# Expose port
-EXPOSE 3456
+# Expose ports for main service and WebUI
+EXPOSE 3456 3457
 
 # Use entrypoint script to initialize config before starting service
 ENTRYPOINT ["./docker-entrypoint.sh"]

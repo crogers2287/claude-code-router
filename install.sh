@@ -1,0 +1,297 @@
+#!/bin/bash
+
+# Claude Code Router Installation Script
+# Supports Linux and macOS
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[+]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[!]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[*]${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}[i]${NC} $1"
+}
+
+# Detect OS
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        OS="linux"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        OS="macos"
+    else
+        print_error "Unsupported OS: $OSTYPE"
+        exit 1
+    fi
+    print_status "Detected OS: $OS"
+}
+
+# Check if Docker is installed
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker is not installed. Please install Docker first."
+        print_info "Visit https://docs.docker.com/get-docker/ for installation instructions."
+        exit 1
+    fi
+    
+    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+        print_error "Docker Compose is not installed. Please install Docker Compose."
+        print_info "Visit https://docs.docker.com/compose/install/ for installation instructions."
+        exit 1
+    fi
+    
+    print_status "Docker and Docker Compose are installed"
+}
+
+# Check if Claude Code is installed in the container
+check_claude_code() {
+    print_info "Checking Claude Code installation in Docker container..."
+    
+    # The Claude Code installation is handled in the Dockerfile
+    # We just need to verify it will be installed when we build
+    if grep -q "@anthropic-ai/claude-code" Dockerfile; then
+        print_status "Claude Code will be installed in the Docker container"
+    else
+        print_warning "Claude Code installation not found in Dockerfile, adding it..."
+        # This case shouldn't happen with the current Dockerfile, but keeping as safety check
+    fi
+}
+
+# Create configuration directory
+setup_config_dir() {
+    CONFIG_DIR="$HOME/.claude-code-router"
+    
+    if [ ! -d "$CONFIG_DIR" ]; then
+        print_status "Creating configuration directory: $CONFIG_DIR"
+        mkdir -p "$CONFIG_DIR"
+    else
+        print_info "Configuration directory already exists: $CONFIG_DIR"
+    fi
+    
+    # Copy example config if no config exists
+    if [ ! -f "$CONFIG_DIR/config.json" ]; then
+        if [ -f "config.example.json" ]; then
+            print_status "Copying example configuration to $CONFIG_DIR/config.json"
+            cp config.example.json "$CONFIG_DIR/config.json"
+            print_warning "Please edit $CONFIG_DIR/config.json with your API keys and preferences"
+        else
+            print_warning "No example configuration found. You'll need to create $CONFIG_DIR/config.json manually"
+        fi
+    else
+        print_info "Configuration file already exists: $CONFIG_DIR/config.json"
+    fi
+}
+
+# Build Docker image
+build_docker_image() {
+    print_status "Building Docker image for Claude Code Router..."
+    
+    if docker compose version &> /dev/null; then
+        docker compose build
+    else
+        docker-compose build
+    fi
+    
+    print_status "Docker image built successfully"
+}
+
+# Create ccr wrapper script
+create_ccr_wrapper() {
+    WRAPPER_DIR="/usr/local/bin"
+    WRAPPER_PATH="$WRAPPER_DIR/ccr"
+    
+    # Check if we need sudo
+    if [ -w "$WRAPPER_DIR" ]; then
+        SUDO=""
+    else
+        SUDO="sudo"
+        print_info "Administrator privileges required to install ccr command"
+    fi
+    
+    print_status "Creating ccr wrapper script..."
+    
+    # Get the absolute path to the project directory
+    PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    
+    # Create wrapper script
+    cat > /tmp/ccr << EOF
+#!/bin/bash
+# Claude Code Router wrapper script
+
+# Change to the project directory
+cd "$PROJECT_DIR"
+
+# Function to ensure container is running
+ensure_container_running() {
+    if ! docker ps | grep -q claude-code-router; then
+        echo "Starting Claude Code Router container..."
+        if docker compose version &> /dev/null; then
+            docker compose up -d
+        else
+            docker-compose up -d
+        fi
+        
+        # Wait for services to be ready
+        echo "Waiting for services to start..."
+        sleep 5
+    fi
+}
+
+# Handle different commands
+case "\$1" in
+    start)
+        if docker compose version &> /dev/null; then
+            docker compose up -d
+        else
+            docker-compose up -d
+        fi
+        echo "Claude Code Router started"
+        echo "Main service: http://localhost:3456"
+        echo "Web UI: http://localhost:3457/ui"
+        ;;
+    stop)
+        if docker compose version &> /dev/null; then
+            docker compose down
+        else
+            docker-compose down
+        fi
+        echo "Claude Code Router stopped"
+        ;;
+    restart)
+        if docker compose version &> /dev/null; then
+            docker compose restart
+        else
+            docker-compose restart
+        fi
+        echo "Claude Code Router restarted"
+        ;;
+    status)
+        if docker ps | grep -q claude-code-router; then
+            echo "Claude Code Router is running"
+            docker ps | grep claude-code-router
+        else
+            echo "Claude Code Router is not running"
+        fi
+        ;;
+    logs)
+        shift
+        if docker compose version &> /dev/null; then
+            docker compose logs \$@
+        else
+            docker-compose logs \$@
+        fi
+        ;;
+    code)
+        ensure_container_running
+        shift
+        # Execute the command inside the container
+        docker exec -it claude-code-router node dist/cli.js code "\$@"
+        ;;
+    config)
+        ensure_container_running
+        echo "Opening configuration interface..."
+        # Detect OS and open browser
+        if [[ "\$OSTYPE" == "linux-gnu"* ]]; then
+            xdg-open "http://localhost:3457/ui" 2>/dev/null || echo "Please open http://localhost:3457/ui in your browser"
+        elif [[ "\$OSTYPE" == "darwin"* ]]; then
+            open "http://localhost:3457/ui"
+        fi
+        ;;
+    exec)
+        shift
+        docker exec -it claude-code-router \$@
+        ;;
+    *)
+        # Pass through any other commands to the CLI inside the container
+        ensure_container_running
+        docker exec -it claude-code-router node dist/cli.js "\$@"
+        ;;
+esac
+EOF
+    
+    # Install wrapper script
+    $SUDO mv /tmp/ccr "$WRAPPER_PATH"
+    $SUDO chmod +x "$WRAPPER_PATH"
+    
+    print_status "ccr command installed to $WRAPPER_PATH"
+}
+
+# Start services
+start_services() {
+    print_status "Starting Claude Code Router services..."
+    
+    if docker compose version &> /dev/null; then
+        docker compose up -d
+    else
+        docker-compose up -d
+    fi
+    
+    # Wait for services to be ready
+    print_info "Waiting for services to start..."
+    sleep 5
+    
+    # Check if services are running
+    if docker ps | grep -q claude-code-router; then
+        print_status "Services started successfully!"
+        print_info "Main service: http://localhost:3456"
+        print_info "Web UI: http://localhost:3457/ui"
+    else
+        print_error "Failed to start services. Check logs with: ccr logs"
+        exit 1
+    fi
+}
+
+# Main installation flow
+main() {
+    echo "=================================="
+    echo "Claude Code Router Installation"
+    echo "=================================="
+    echo
+    
+    # Check prerequisites
+    detect_os
+    check_docker
+    check_claude_code
+    
+    # Setup
+    setup_config_dir
+    build_docker_image
+    create_ccr_wrapper
+    start_services
+    
+    echo
+    echo "=================================="
+    print_status "Installation completed!"
+    echo "=================================="
+    echo
+    echo "Available commands:"
+    echo "  ccr start      - Start the router service"
+    echo "  ccr stop       - Stop the router service"
+    echo "  ccr restart    - Restart the router service"
+    echo "  ccr status     - Check service status"
+    echo "  ccr logs       - View service logs"
+    echo "  ccr code       - Run Claude Code through the router"
+    echo "  ccr config     - Open the Web UI configuration"
+    echo
+    print_warning "Don't forget to configure your API keys in ~/.claude-code-router/config.json"
+    print_info "Or use 'ccr config' to open the Web UI configuration interface"
+}
+
+# Run main function
+main
