@@ -43,22 +43,20 @@ The installer will:
 **Available Commands:**
 ```bash
 ccr start      # Start the router service
-ccr stop       # Stop the router service
+ccr stop       # Stop the router service  
 ccr config     # Open WebUI configuration (http://localhost:3457/ui)
-ccr login      # Login to Claude Code (authentication persists)
 ccr code       # Run Claude Code through the router
 ccr logs       # View service logs
 ccr status     # Check service status
 ```
 
 **First-time Setup:**
-Before using `ccr code`, you need to authenticate with Claude:
+No authentication required! The router handles all API authentication using configured provider keys:
 ```bash
-ccr login   # Login to Claude Code (required first step)
-ccr code    # Run Claude Code through the router
+ccr code    # Ready to use immediately after installation
 ```
 
-Your authentication will be saved in `~/.claude` and persist across container restarts. You only need to login once.
+Configure your providers and API keys using the WebUI at `http://localhost:3457/ui`
 
 **Uninstall:**
 ```bash
@@ -66,12 +64,10 @@ Your authentication will be saved in `~/.claude` and persist across container re
 ```
 
 **Persistent Storage:**
-The Docker setup automatically maps the following directories for data persistence:
-- `~/.claude-code-router` → Router configuration
-- `~/.claude` → Claude Code authentication data
-- `~/.claude.json` → Claude Code settings
+The Docker setup automatically maps the router configuration directory:
+- `~/.claude-code-router` → Router configuration and provider API keys
 
-This ensures your login and configuration persist across container restarts and updates.
+This ensures your configuration persists across container restarts and updates.
 
 ### 📦 Manual Installation
 

@@ -251,14 +251,8 @@ case "\$1" in
         # Check if Claude is authenticated, if not, prompt for login
         CONTAINER_NAME=\$(get_container_name)
         
-        # Check authentication status by running a simple claude command
-        if ! docker exec \$CONTAINER_NAME claude auth whoami >/dev/null 2>&1; then
-            echo "⚠️  Claude Code is not authenticated."
-            echo "🔐 Please run 'ccr login' first to authenticate with Claude."
-            echo ""
-            echo "Run: ccr login"
-            exit 1
-        fi
+        # No authentication check needed - router handles all authentication
+        # Claude Code will connect to the router which has the provider API keys
         
         # Execute the command inside the container
         docker exec -it \$CONTAINER_NAME node dist/cli.js code "\$@"
@@ -274,12 +268,9 @@ case "\$1" in
         fi
         ;;
     login)
-        ensure_container_running
-        echo "Logging into Claude Code..."
-        echo "Note: Your authentication will be saved and persist across container restarts."
-        CONTAINER_NAME=\$(get_container_name)
-        docker exec -it \$CONTAINER_NAME claude auth login
-        echo "Login complete! Authentication data is saved in ~/.claude"
+        echo "ℹ️  No login required!"
+        echo "The router handles authentication with all providers using configured API keys."
+        echo "Just run: ccr code"
         ;;
     exec)
         shift
