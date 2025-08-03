@@ -1,0 +1,16 @@
+{
+  "Providers": [
+    {
+      "name": "echo",
+      "api_base_url": "http://httpbin.org/post",
+      "api_key": "dummy-key",
+      "models": ["echo-model"]
+    }
+  ],
+  "Router": {
+    "default": "echo,echo-model"
+  },
+  "APIKEY": "docker-test-key",
+  "HOST": "0.0.0.0",
+  "API_TIMEOUT_MS": 300000
+}
