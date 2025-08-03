@@ -109,7 +109,7 @@ const templates: { [key: string]: Provider } = {
   
   'z.ai': {
     name: 'z.ai',
-    api_base_url: 'https://api.z.ai/v1/chat/completions',
+    api_base_url: 'https://api.z.ai/api/paas/v4/chat/completions',
     api_key: '',
     models: [
       'z1-preview'

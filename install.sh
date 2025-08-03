@@ -76,12 +76,34 @@ check_claude_code() {
 # Create configuration directory
 setup_config_dir() {
     CONFIG_DIR="$HOME/.claude-code-router"
+    CLAUDE_DIR="$HOME/.claude"
     
+    # Setup Claude Code Router config
     if [ ! -d "$CONFIG_DIR" ]; then
         print_status "Creating configuration directory: $CONFIG_DIR"
         mkdir -p "$CONFIG_DIR"
     else
         print_info "Configuration directory already exists: $CONFIG_DIR"
+    fi
+    
+    # Setup Claude Code config directory for persistence
+    if [ ! -d "$CLAUDE_DIR" ]; then
+        print_status "Creating Claude Code configuration directory: $CLAUDE_DIR"
+        mkdir -p "$CLAUDE_DIR"
+        print_info "This directory will store Claude Code authentication data"
+    else
+        print_info "Claude Code configuration directory already exists: $CLAUDE_DIR"
+    fi
+    
+    # Create placeholder files for Claude config if they don't exist
+    # This ensures Docker volume mounts work properly
+    if [ ! -f "$HOME/.claude.json" ]; then
+        print_info "Creating placeholder Claude config file for Docker volume mounting"
+        echo '{}' > "$HOME/.claude.json"
+    fi
+    
+    if [ ! -f "$HOME/.claude.json.backup" ]; then
+        echo '{}' > "$HOME/.claude.json.backup"
     fi
     
     # Copy example config if no config exists
@@ -238,6 +260,14 @@ case "\$1" in
         elif [[ "\$OSTYPE" == "darwin"* ]]; then
             open "http://localhost:3457/ui"
         fi
+        ;;
+    login)
+        ensure_container_running
+        echo "Logging into Claude Code..."
+        echo "Note: Your authentication will be saved and persist across container restarts."
+        CONTAINER_NAME=\$(get_container_name)
+        docker exec -it \$CONTAINER_NAME claude auth login
+        echo "Login complete! Authentication data is saved in ~/.claude"
         ;;
     exec)
         shift

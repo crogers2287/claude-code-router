@@ -11,7 +11,7 @@
 ## ✨ Features
 
 - **Model Routing**: Route requests to different models based on your needs (e.g., background tasks, thinking, long context).
-- **Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, and SiliconFlow.
+- **Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, SiliconFlow, and Z.ai.
 - **Request/Response Transformation**: Customize requests and responses for different providers using transformers.
 - **Dynamic Model Switching**: Switch models on-the-fly within Claude Code using the `/model` command.
 - **GitHub Actions Integration**: Trigger Claude Code tasks in your GitHub workflows.
@@ -45,15 +45,31 @@ The installer will:
 ccr start      # Start the router service
 ccr stop       # Stop the router service
 ccr config     # Open WebUI configuration (http://localhost:3457/ui)
+ccr login      # Login to Claude Code (authentication persists)
 ccr code       # Run Claude Code through the router
 ccr logs       # View service logs
 ccr status     # Check service status
 ```
 
+**First-time Setup:**
+After installation, you'll need to authenticate with Claude Code:
+```bash
+ccr login
+```
+Your authentication will be saved in `~/.claude` and persist across container restarts.
+
 **Uninstall:**
 ```bash
 ./uninstall.sh  # Removes everything (with option to keep config)
 ```
+
+**Persistent Storage:**
+The Docker setup automatically maps the following directories for data persistence:
+- `~/.claude-code-router` → Router configuration
+- `~/.claude` → Claude Code authentication data
+- `~/.claude.json` → Claude Code settings
+
+This ensures your login and configuration persist across container restarts and updates.
 
 ### 📦 Manual Installation
 
@@ -189,6 +205,14 @@ Here is a comprehensive example:
         "claude-opus-4-20250514",
         "gemini-2.5-pro"
       ]
+    },
+    {
+      "name": "z.ai",
+      "api_base_url": "https://api.z.ai/api/paas/v4/chat/completions",
+      "api_key": "sk-xxx",
+      "models": [
+        "z1-preview"
+      ]
     }
   ],
   "Router": {
@@ -200,6 +224,28 @@ Here is a comprehensive example:
     "webSearch": "gemini,gemini-2.5-flash"
   }
 }
+```
+
+#### ⚠️ API URL Verification
+
+**Important**: Provider API URLs may change over time. If you encounter connection issues or authentication failures, verify the correct API endpoint URL from the provider's documentation:
+
+- **Z.ai**: Check their latest API documentation for the current endpoint format
+- **OpenRouter**: Verify the API base URL hasn't changed
+- **DeepSeek**: Check for API version updates
+- **Other providers**: Always consult the provider's official documentation
+
+**Troubleshooting API URLs:**
+1. Use the WebUI's built-in provider test feature (🧪 Test button)
+2. Check the provider's official documentation or API reference
+3. Look for error messages that might indicate the correct endpoint
+4. Try both `/v1/chat/completions` and provider-specific paths
+
+**Common URL patterns:**
+```
+- OpenAI-compatible: https://api.provider.com/v1/chat/completions
+- Provider-specific: https://api.provider.com/api/v1/chat/completions
+- Versioned APIs: https://api.provider.com/api/paas/v4/chat/completions
 ```
 
 ### 3. Running Claude Code with the Router

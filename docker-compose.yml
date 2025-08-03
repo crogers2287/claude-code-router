@@ -7,6 +7,9 @@ services:
       - "3457:3457"
     volumes:
       - ~/.claude-code-router:/root/.claude-code-router
+      - ~/.claude:/root/.claude
+      - ~/.claude.json:/root/.claude.json:rw
+      - ~/.claude.json.backup:/root/.claude.json.backup:rw
     environment:
       - NODE_ENV=production
       # Override HOST setting to bind to all interfaces for Docker access
