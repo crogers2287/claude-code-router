@@ -1,7 +1,5 @@
 # Claude Code Router
 
-[中文版](README_zh.md)
-
 <div align="center">
   <img src="logo.png" alt="Claude Code Router Logo" width="200" />
 </div>
@@ -421,73 +419,3 @@ jobs:
 
 This setup allows for interesting automations, like running tasks during off-peak hours to reduce API costs.
 
-## 📝 Further Reading
-
-- [Project Motivation and How It Works](blog/en/project-motivation-and-how-it-works.md)
-- [Maybe We Can Do More with the Router](blog/en/maybe-we-can-do-more-with-the-route.md)
-
-## ❤️ Support & Sponsoring
-
-If you find this project helpful, please consider sponsoring its development. Your support is greatly appreciated!
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F31GN2GM)
-
-<table>
-  <tr>
-    <td><img src="/blog/images/alipay.jpg" width="200" alt="Alipay" /></td>
-    <td><img src="/blog/images/wechat.jpg" width="200" alt="WeChat Pay" /></td>
-  </tr>
-</table>
-
-### Our Sponsors
-
-A huge thank you to all our sponsors for their generous support!
-
-
-- [AIHubmix](https://aihubmix.com/)
-- @Simon Leischnig
-- [@duanshuaimin](https://github.com/duanshuaimin)
-- [@vrgitadmin](https://github.com/vrgitadmin)
-- @\*o
-- [@ceilwoo](https://github.com/ceilwoo)
-- @\*说
-- @\*更
-- @K\*g
-- @R\*R
-- [@bobleer](https://github.com/bobleer)
-- @\*苗
-- @\*划
-- [@Clarence-pan](https://github.com/Clarence-pan)
-- [@carter003](https://github.com/carter003)
-- @S\*r
-- @\*晖
-- @\*敏
-- @Z\*z
-- @\*然
-- [@cluic](https://github.com/cluic)
-- @\*苗
-- [@PromptExpert](https://github.com/PromptExpert)
-- @\*应
-- [@yusnake](https://github.com/yusnake)
-- @\*飞
-- @董\*
-- @\*汀
-- @\*涯
-- @\*:-）
-- @\*\*磊
-- @\*琢
-- @\*成
-- @Z\*o
-- @\*琨
-- [@congzhangzh](https://github.com/congzhangzh)
-- @\*\_
-- @Z\*m
-- @*鑫
-- @c\*y
-- @\*昕
-- [@witsice](https://github.com/witsice)
-- @b\*g
-- @\*亿
-
-
-(If your name is masked, please contact me via my homepage email to update it with your GitHub username.)
