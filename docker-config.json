@@ -1,16 +1,46 @@
 {
   "Providers": [
     {
-      "name": "echo",
-      "api_base_url": "http://httpbin.org/post",
-      "api_key": "dummy-key",
-      "models": ["echo-model"]
+      "name": "OpenRouter",
+      "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
+      "api_key": "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",
+      "models": [
+        "qwen/qwen3-coder",
+        "z-ai/glm-4.5",
+        "z-ai/glm-4.5-air",
+        "openrouter/horizon-alpha",
+        "anthropic/claude-sonnet-4",
+        "qwen/qwen3-30b-a3b-instruct-2507",
+        "qwen/qwen3-235b-a22b-thinking-2507"
+      ],
+      "transformer": {
+        "use": [
+          "openrouter",
+          "cleancache"
+        ]
+      }
+    },
+    {
+      "name": "ollama",
+      "api_base_url": "http://192.168.1.195:11434/v1/chat/completions",
+      "api_key": "ollama",
+      "models": [
+        "qwen3:14b",
+        "granite3.2:8b"
+      ]
     }
   ],
   "Router": {
-    "default": "echo,echo-model"
+    "default": "OpenRouter,z-ai/glm-4.5",
+    "background": "OpenRouter,z-ai/glm-4.5",
+    "think": "OpenRouter,qwen/qwen3-235b-a22b-thinking-2507",
+    "longContext": "OpenRouter,z-ai/glm-4.5",
+    "longContextThreshold": 60000,
+    "webSearch": "OpenRouter,z-ai/glm-4.5-air"
   },
-  "APIKEY": "docker-test-key",
+  "APIKEY": "docker-api-key",
   "HOST": "0.0.0.0",
-  "API_TIMEOUT_MS": 300000
+  "API_TIMEOUT_MS": 600000,
+  "LOG": true,
+  "PORT": 3456
 }

@@ -106,14 +106,18 @@ setup_config_dir() {
         echo '{}' > "$HOME/.claude.json.backup"
     fi
     
-    # Copy example config if no config exists
+    # Copy Docker-optimized config if no config exists
     if [ ! -f "$CONFIG_DIR/config.json" ]; then
-        if [ -f "config.example.json" ]; then
+        if [ -f "docker-config.json" ]; then
+            print_status "Copying Docker configuration to $CONFIG_DIR/config.json"
+            cp docker-config.json "$CONFIG_DIR/config.json"
+            print_warning "Configuration includes working OpenRouter and Ollama providers"
+        elif [ -f "config.example.json" ]; then
             print_status "Copying example configuration to $CONFIG_DIR/config.json"
             cp config.example.json "$CONFIG_DIR/config.json"
             print_warning "Please edit $CONFIG_DIR/config.json with your API keys and preferences"
         else
-            print_warning "No example configuration found. You'll need to create $CONFIG_DIR/config.json manually"
+            print_warning "No configuration found. You'll need to create $CONFIG_DIR/config.json manually"
         fi
     else
         print_info "Configuration file already exists: $CONFIG_DIR/config.json"
