@@ -59,17 +59,19 @@ check_docker() {
     print_status "Docker and Docker Compose are installed"
 }
 
-# Check if Claude Code is installed in the container
+# Check if Claude Code is installed on the host
 check_claude_code() {
-    print_info "Checking Claude Code installation in Docker container..."
+    print_info "Checking Claude Code installation on host machine..."
     
-    # The Claude Code installation is handled in the Dockerfile
-    # We just need to verify it will be installed when we build
-    if grep -q "@anthropic-ai/claude-code" Dockerfile; then
-        print_status "Claude Code will be installed in the Docker container"
+    if ! command -v claude &> /dev/null; then
+        print_error "Claude Code is not installed on the host machine"
+        print_info "Please install Claude Code first:"
+        print_info "  npm install -g @anthropic-ai/claude-code"
+        print_info "  or visit: https://docs.anthropic.com/en/docs/claude-code/quickstart"
+        exit 1
     else
-        print_warning "Claude Code installation not found in Dockerfile, adding it..."
-        # This case shouldn't happen with the current Dockerfile, but keeping as safety check
+        print_status "Claude Code is installed on host: $(which claude)"
+        print_info "Version: $(claude --version 2>/dev/null || echo 'unknown')"
     fi
 }
 
@@ -252,12 +254,15 @@ case "\$1" in
         ensure_container_running
         shift
         
-        # Check if Claude is authenticated, if not, prompt for login
-        CONTAINER_NAME=\$(get_container_name)
+        # Get the router port from the container (default 3456 mapped to 3458)
+        ROUTER_PORT=3458
         
-        # Execute the router's code command inside the container
-        # This starts Claude Code with router environment variables
-        docker exec -it \$CONTAINER_NAME node dist/cli.js code "\$@"
+        # Run Claude Code on the host, pointing to the router in the container
+        # The router is exposed on localhost:3458
+        ANTHROPIC_BASE_URL="http://127.0.0.1:\$ROUTER_PORT" \\
+        ANTHROPIC_AUTH_TOKEN="test" \\
+        API_TIMEOUT_MS="600000" \\
+        claude "\$@"
         ;;
     config)
         ensure_container_running

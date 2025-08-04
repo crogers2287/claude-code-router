@@ -34,11 +34,15 @@ chmod +x install.sh
 ```
 
 The installer will:
-- ✅ Check prerequisites (Docker, Docker Compose)
-- ✅ Build the Docker image with Claude Code pre-installed
+- ✅ Check prerequisites (Docker, Docker Compose, Claude Code)
+- ✅ Build the Docker image for the router service
 - ✅ Create the `ccr` command on your system
 - ✅ Start both the router service (port 3458) and WebUI (port 3459)
 - ✅ Handle partial installations and conflicts automatically
+
+**Prerequisites:**
+- Docker and Docker Compose installed
+- Claude Code installed on host: `npm install -g @anthropic-ai/claude-code`
 
 **Available Commands:**
 ```bash
@@ -71,13 +75,13 @@ This ensures your configuration persists across container restarts and updates.
 
 ### 📦 Manual Installation
 
-First, ensure you have [Claude Code](https://docs.anthropic.com/en/docs/claude-code/quickstart) installed:
+**Prerequisites:**
+1. Ensure you have [Claude Code](https://docs.anthropic.com/en/docs/claude-code/quickstart) installed:
+   ```shell
+   npm install -g @anthropic-ai/claude-code
+   ```
 
-```shell
-npm install -g @anthropic-ai/claude-code
-```
-
-Then, install Claude Code Router:
+2. Then, install Claude Code Router:
 
 ```shell
 npm install -g @musistudio/claude-code-router

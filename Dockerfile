@@ -26,10 +26,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install system dependencies and Claude Code CLI
+# Install system dependencies
 RUN apk add --no-cache curl bash jq \
-    && npm install -g pnpm \
-    && npm install -g @anthropic-ai/claude-code
+    && npm install -g pnpm
 
 # Copy package files
 COPY package*.json pnpm-lock.yaml ./
