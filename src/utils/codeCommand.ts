@@ -19,7 +19,8 @@ export async function executeCodeCommand(args: string[] = []) {
   // Otherwise, preserve Claude's built-in authentication for Anthropic API usage
   if (config?.APIKEY) {
     env.ANTHROPIC_API_KEY = config.APIKEY;
-    env.ANTHROPIC_AUTH_TOKEN = "test"; // Router handles auth
+    // Claude Code uses ANTHROPIC_AUTH_TOKEN for Bearer authentication
+    delete env.ANTHROPIC_AUTH_TOKEN;
   }
   // If no router APIKEY, leave Claude's auth intact (ANTHROPIC_AUTH_TOKEN from ~/.claude)
 
