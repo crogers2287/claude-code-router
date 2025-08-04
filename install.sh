@@ -255,10 +255,8 @@ case "\$1" in
         # Check if Claude is authenticated, if not, prompt for login
         CONTAINER_NAME=\$(get_container_name)
         
-        # No authentication check needed - router handles all authentication
-        # Claude Code will connect to the router which has the provider API keys
-        
-        # Execute the command inside the container
+        # Execute the router's code command inside the container
+        # This starts Claude Code with router environment variables
         docker exec -it \$CONTAINER_NAME node dist/cli.js code "\$@"
         ;;
     config)
