@@ -135,6 +135,67 @@ const App: React.FC = () => {
     }
   };
 
+  // Export configuration
+  const exportConfig = () => {
+    if (!config) return;
+    
+    const dataStr = JSON.stringify(config, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `claude-router-config-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    showToast({
+      type: 'success',
+      title: 'Configuration Exported',
+      message: 'Your configuration has been downloaded successfully.'
+    });
+  };
+
+  // Import configuration
+  const importConfig = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const importedConfig = JSON.parse(text);
+        
+        // Basic validation
+        if (!importedConfig.Providers || !importedConfig.Router) {
+          throw new Error('Invalid configuration file');
+        }
+        
+        // Save the imported config
+        await saveConfig(importedConfig);
+        
+        showToast({
+          type: 'success',
+          title: 'Configuration Imported',
+          message: 'Your configuration has been imported successfully.'
+        });
+      } catch (error) {
+        console.error('Failed to import config:', error);
+        showToast({
+          type: 'error',
+          title: 'Import Failed',
+          message: 'Failed to import configuration. Please check the file format.'
+        });
+      }
+    };
+    
+    input.click();
+  };
+
   if (loading) {
     return (
       <div className="app">
@@ -366,6 +427,23 @@ const App: React.FC = () => {
             <div className="title-section">
               <h1>Claude Code Router</h1>
               <p>Intelligent LLM routing and configuration management for modern AI workflows</p>
+            </div>
+            
+            <div className="header-actions" style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+              <button
+                className="btn btn-secondary btn-small"
+                onClick={exportConfig}
+                title="Export configuration to JSON file"
+              >
+                📥 Export Config
+              </button>
+              <button
+                className="btn btn-secondary btn-small"
+                onClick={importConfig}
+                title="Import configuration from JSON file"
+              >
+                📤 Import Config
+              </button>
             </div>
           </div>
           

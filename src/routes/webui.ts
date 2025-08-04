@@ -141,12 +141,13 @@ export async function webuiRoutes(fastify: FastifyInstance) {
       const config = request.body;
       await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
       
-      // Trigger hot reload by restarting the server
+      reply.send({ success: true, message: 'Configuration updated successfully' });
+      
+      // Trigger hot reload after sending response
       setTimeout(() => {
+        console.log('🔄 Triggering configuration hot reload...');
         process.emit('SIGHUP' as any);
       }, 100);
-      
-      reply.send({ success: true, message: 'Configuration updated successfully' });
     } catch (error) {
       reply.code(500).send({ error: 'Failed to update configuration' });
     }
