@@ -178,12 +178,12 @@ create_ccr_wrapper() {
     PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
     
     # Create wrapper script
-    cat > /tmp/ccr << EOF
+    cat > /tmp/ccr << 'EOF'
 #!/bin/bash
 # Claude Code Router wrapper script
 
 # Change to the project directory
-cd "$PROJECT_DIR"
+cd "/home/crogers2287/claude-code-router"
 
 # Function to ensure container is running
 ensure_container_running() {
@@ -207,7 +207,7 @@ get_container_name() {
 }
 
 # Handle different commands
-case "\$1" in
+case "$1" in
     start)
         if docker compose version &> /dev/null; then
             docker compose up -d
@@ -245,9 +245,9 @@ case "\$1" in
     logs)
         shift
         if docker compose version &> /dev/null; then
-            docker compose logs \$@
+            docker compose logs $@
         else
-            docker-compose logs \$@
+            docker-compose logs $@
         fi
         ;;
     code)
@@ -259,18 +259,18 @@ case "\$1" in
         
         # Run Claude Code on the host, pointing to the router in the container
         # The router is exposed on localhost:3458
-        ANTHROPIC_BASE_URL="http://127.0.0.1:\$ROUTER_PORT" \\
-        ANTHROPIC_AUTH_TOKEN="test" \\
-        API_TIMEOUT_MS="600000" \\
-        claude "\$@"
+        ANTHROPIC_BASE_URL="http://127.0.0.1:$ROUTER_PORT" \
+        ANTHROPIC_AUTH_TOKEN="test" \
+        API_TIMEOUT_MS="600000" \
+        claude "$@"
         ;;
     config)
         ensure_container_running
         echo "Opening configuration interface..."
         # Detect OS and open browser
-        if [[ "\$OSTYPE" == "linux-gnu"* ]]; then
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
             xdg-open "http://localhost:3459/ui" 2>/dev/null || echo "Please open http://localhost:3459/ui in your browser"
-        elif [[ "\$OSTYPE" == "darwin"* ]]; then
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
             open "http://localhost:3459/ui"
         fi
         ;;
@@ -281,14 +281,14 @@ case "\$1" in
         ;;
     exec)
         shift
-        CONTAINER_NAME=\$(get_container_name)
-        docker exec -it \$CONTAINER_NAME \$@
+        CONTAINER_NAME=$(get_container_name)
+        docker exec -it $CONTAINER_NAME $@
         ;;
     *)
         # Pass through any other commands to the CLI inside the container
         ensure_container_running
-        CONTAINER_NAME=\$(get_container_name)
-        docker exec -it \$CONTAINER_NAME node dist/cli.js "\$@"
+        CONTAINER_NAME=$(get_container_name)
+        docker exec -it $CONTAINER_NAME node dist/cli.js "$@"
         ;;
 esac
 EOF
