@@ -1,8 +1,6 @@
 # Claude Code Router
 
-<div align="center">
-  <img src="logo.png" alt="Claude Code Router Logo" width="200" />
-</div>
+[中文版](README_zh.md)
 
 > A powerful tool to route Claude Code requests to different models and customize any request.
 
@@ -11,7 +9,7 @@
 ## ✨ Features
 
 - **Model Routing**: Route requests to different models based on your needs (e.g., background tasks, thinking, long context).
-- **Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, SiliconFlow, and Z.ai.
+- **Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, and SiliconFlow.
 - **Request/Response Transformation**: Customize requests and responses for different providers using transformers.
 - **Dynamic Model Switching**: Switch models on-the-fly within Claude Code using the `/model` command.
 - **GitHub Actions Integration**: Trigger Claude Code tasks in your GitHub workflows.
@@ -19,57 +17,7 @@
 
 ## 🚀 Getting Started
 
-### 🐳 Quick Start with Docker (Recommended)
-
-For the easiest setup, use our automated Docker installation:
-
-```bash
-# Clone the repository
-git clone https://github.com/crogers2287/claude-code-router.git
-cd claude-code-router
-
-# Run the automated installer
-chmod +x install.sh
-./install.sh
-```
-
-The installer will:
-- ✅ Check prerequisites (Docker, Docker Compose)
-- ✅ Build the Docker image with Claude Code pre-installed
-- ✅ Create the `ccr` command on your system
-- ✅ Start both the router service (port 3458) and WebUI (port 3459)
-- ✅ Handle partial installations and conflicts automatically
-
-**Available Commands:**
-```bash
-ccr start      # Start the router service
-ccr stop       # Stop the router service  
-ccr config     # Open WebUI configuration (http://localhost:3459/ui)
-ccr code       # Run Claude Code through the router
-ccr logs       # View service logs
-ccr status     # Check service status
-```
-
-**First-time Setup:**
-No authentication required! The router handles all API authentication using configured provider keys:
-```bash
-ccr code    # Ready to use immediately after installation
-```
-
-Configure your providers and API keys using the WebUI at `http://localhost:3459/ui`
-
-**Uninstall:**
-```bash
-./uninstall.sh  # Removes everything (with option to keep config)
-```
-
-**Persistent Storage:**
-The Docker setup automatically maps the router configuration directory:
-- `~/.claude-code-router` → Router configuration and provider API keys
-
-This ensures your configuration persists across container restarts and updates.
-
-### 📦 Manual Installation
+### 1. Installation
 
 First, ensure you have [Claude Code](https://docs.anthropic.com/en/docs/claude-code/quickstart) installed:
 
@@ -203,14 +151,6 @@ Here is a comprehensive example:
         "claude-opus-4-20250514",
         "gemini-2.5-pro"
       ]
-    },
-    {
-      "name": "z.ai",
-      "api_base_url": "https://api.z.ai/api/paas/v4/chat/completions",
-      "api_key": "sk-xxx",
-      "models": [
-        "z1-preview"
-      ]
     }
   ],
   "Router": {
@@ -222,28 +162,6 @@ Here is a comprehensive example:
     "webSearch": "gemini,gemini-2.5-flash"
   }
 }
-```
-
-#### ⚠️ API URL Verification
-
-**Important**: Provider API URLs may change over time. If you encounter connection issues or authentication failures, verify the correct API endpoint URL from the provider's documentation:
-
-- **Z.ai**: Check their latest API documentation for the current endpoint format
-- **OpenRouter**: Verify the API base URL hasn't changed
-- **DeepSeek**: Check for API version updates
-- **Other providers**: Always consult the provider's official documentation
-
-**Troubleshooting API URLs:**
-1. Use the WebUI's built-in provider test feature (🧪 Test button)
-2. Check the provider's official documentation or API reference
-3. Look for error messages that might indicate the correct endpoint
-4. Try both `/v1/chat/completions` and provider-specific paths
-
-**Common URL patterns:**
-```
-- OpenAI-compatible: https://api.provider.com/v1/chat/completions
-- Provider-specific: https://api.provider.com/api/v1/chat/completions
-- Versioned APIs: https://api.provider.com/api/paas/v4/chat/completions
 ```
 
 ### 3. Running Claude Code with the Router
@@ -260,47 +178,20 @@ ccr code
 > ccr restart
 > ```
 
-### 4. Web UI Configuration
+### 4. UI Mode (Beta)
 
-For a more intuitive experience, you can use the web-based UI to manage your configuration:
+For a more intuitive experience, you can use the UI mode to manage your configuration:
 
 ```shell
 ccr ui
 ```
 
-This will open a web-based interface where you can easily manage providers, configure routing rules, and test your setup.
+This will open a web-based interface where you can easily view and edit your `config.json` file.
 
-#### 🎯 Enhanced Web UI Features
+![UI](/blog/images/ui.png)
 
-- **🔧 Visual Provider Management**: Add, edit, and remove providers with a user-friendly interface
-- **📊 Router Configuration**: Set up routing rules for different scenarios (default, background, thinking, long context, web search)
-- **🧪 Real-time Testing**: Test your configuration directly from the UI
-- **⚡ Command Generator**: Generate `ccr code` commands with custom model selection
-- **🦙 Ollama Integration**: Automatic model discovery for Ollama instances
-  - Detects Ollama URLs automatically (localhost:11434, etc.)
-  - One-click model discovery from your Ollama installation
-  - Beautiful model selection interface with visual indicators
-- **📤📥 Configuration Export/Import**: Backup and share your configurations
-  - Export complete configuration or providers only
-  - Import with smart merging (avoids duplicates)
-  - Automatic backup before importing
-- **🔍 Enhanced Model Validation**: Support for modern model names
-  - Allows periods (e.g., `glm-4.5`, `qwen2.5-coder`)
-  - Supports namespaced models (e.g., `anthropic/claude-3.5-sonnet`)
-  - Version tags (e.g., `model:latest`, `model:v1.0`)
-
-#### Screenshots
-
-**Dashboard Overview**
-![Dashboard](screenshots/dashboard.png)
-
-**Provider Management**
-![Providers List](screenshots/providers-list.png)
-
-**Add Provider Modal**
-![Add Provider](screenshots/add-provider-modal.png)
-
-> **Note**: The UI requires authentication. Default password is `admin`. You can change it by setting the `UI_PASSWORD` environment variable or in your config file.
+> **Note**: The UI mode is currently in beta. 100% vibe coding: including project initialization, I just created a folder and a project.md document, and all code was generated by ccr + qwen3-coder + gemini(webSearch). 
+If you encounter any issues, please submit an issue on GitHub.
 
 #### Providers
 
@@ -370,7 +261,24 @@ Transformers allow you to modify the request and response payloads to ensure com
 - `Anthropic`:If you use only the `Anthropic` transformer, it will preserve the original request and response parameters(you can use it to connect directly to an Anthropic endpoint).
 - `deepseek`: Adapts requests/responses for DeepSeek API.
 - `gemini`: Adapts requests/responses for Gemini API.
-- `openrouter`: Adapts requests/responses for OpenRouter API.
+- `openrouter`: Adapts requests/responses for OpenRouter API. It can also accept a `provider` routing parameter to specify which underlying providers OpenRouter should use. For more details, refer to the [OpenRouter documentation](https://openrouter.ai/docs/features/provider-routing). See an example below:
+  ```json
+    "transformer": {
+      "use": ["openrouter"],
+      "moonshotai/kimi-k2": {
+        "use": [
+          [
+            "openrouter",
+            {
+              "provider": {
+                "only": ["moonshotai/fp8"]
+              }
+            }
+          ]
+        ]
+      }
+    }
+  ```
 - `groq`: Adapts requests/responses for groq API.
 - `maxtoken`: Sets a specific `max_tokens` value.
 - `tooluse`: Optimizes tool usage for certain models via `tool_choice`.
@@ -452,6 +360,17 @@ module.exports = async function router(req, config) {
 };
 ```
 
+##### Subagent Routing
+
+For routing within subagents, you must specify a particular provider and model by including `<CCR-SUBAGENT-MODEL>provider,model</CCR-SUBAGENT-MODEL>` at the **beginning** of the subagent's prompt. This allows you to direct specific subagent tasks to designated models.
+
+**Example:**
+
+```
+<CCR-SUBAGENT-MODEL>openrouter,anthropic/claude-3.5-sonnet</CCR-SUBAGENT-MODEL>
+Please help me analyze this code snippet for potential optimizations...
+```
+
 ## 🤖 GitHub Actions
 
 Integrate Claude Code Router into your CI/CD pipeline. After setting up [Claude Code Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions), modify your `.github/workflows/claude.yaml` to use the router:
@@ -511,3 +430,75 @@ jobs:
 
 This setup allows for interesting automations, like running tasks during off-peak hours to reduce API costs.
 
+## 📝 Further Reading
+
+- [Project Motivation and How It Works](blog/en/project-motivation-and-how-it-works.md)
+- [Maybe We Can Do More with the Router](blog/en/maybe-we-can-do-more-with-the-route.md)
+
+## ❤️ Support & Sponsoring
+
+If you find this project helpful, please consider sponsoring its development. Your support is greatly appreciated!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F31GN2GM)
+
+[Paypal](https://paypal.me/musistudio1999)
+
+<table>
+  <tr>
+    <td><img src="/blog/images/alipay.jpg" width="200" alt="Alipay" /></td>
+    <td><img src="/blog/images/wechat.jpg" width="200" alt="WeChat Pay" /></td>
+  </tr>
+</table>
+
+### Our Sponsors
+
+A huge thank you to all our sponsors for their generous support!
+
+
+- [AIHubmix](https://aihubmix.com/)
+- @Simon Leischnig
+- [@duanshuaimin](https://github.com/duanshuaimin)
+- [@vrgitadmin](https://github.com/vrgitadmin)
+- @\*o
+- [@ceilwoo](https://github.com/ceilwoo)
+- @\*说
+- @\*更
+- @K\*g
+- @R\*R
+- [@bobleer](https://github.com/bobleer)
+- @\*苗
+- @\*划
+- [@Clarence-pan](https://github.com/Clarence-pan)
+- [@carter003](https://github.com/carter003)
+- @S\*r
+- @\*晖
+- @\*敏
+- @Z\*z
+- @\*然
+- [@cluic](https://github.com/cluic)
+- @\*苗
+- [@PromptExpert](https://github.com/PromptExpert)
+- @\*应
+- [@yusnake](https://github.com/yusnake)
+- @\*飞
+- @董\*
+- @\*汀
+- @\*涯
+- @\*:-）
+- @\*\*磊
+- @\*琢
+- @\*成
+- @Z\*o
+- @\*琨
+- [@congzhangzh](https://github.com/congzhangzh)
+- @\*\_
+- @Z\*m
+- @*鑫
+- @c\*y
+- @\*昕
+- [@witsice](https://github.com/witsice)
+- @b\*g
+- @\*亿
+
+
+(If your name is masked, please contact me via my homepage email to update it with your GitHub username.)

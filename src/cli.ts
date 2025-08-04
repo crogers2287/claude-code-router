@@ -2,12 +2,16 @@
 import { run } from "./index";
 import { showStatus } from "./utils/status";
 import { executeCodeCommand } from "./utils/codeCommand";
-import { cleanupPidFile, isServiceRunning, getServiceInfo } from "./utils/processCheck";
+import {
+  cleanupPidFile,
+  isServiceRunning,
+  getServiceInfo,
+} from "./utils/processCheck";
 import { version } from "../package.json";
 import { spawn, exec } from "child_process";
 import { PID_FILE, REFERENCE_COUNT_FILE } from "./constants";
 import fs, { existsSync, readFileSync } from "fs";
-import {join} from "path";
+import { join } from "path";
 
 const command = process.argv[2];
 
@@ -20,13 +24,12 @@ Commands:
   restart       Restart server
   status        Show server status
   code          Execute claude command
-  ui            Open configuration web interface
+  ui            Open the web UI in browser
   -v, version   Show version information
   -h, help      Show help information
 
 Example:
   ccr start
-  ccr ui
   ccr code "Write a Hello World"
   ccr ui
 `;
@@ -53,41 +56,7 @@ async function waitForService(
 async function main() {
   switch (command) {
     case "start":
-      if (isServiceRunning()) {
-        console.log("✅ Service is already running in the background.");
-        break;
-      }
-      
-      // Check if we should run in foreground mode
-      if (process.argv.includes("--foreground")) {
-        run();
-      } else {
-        // Start the service in the background
-        const cliPath = join(__dirname, "cli.js");
-        const startProcess = spawn("node", [cliPath, "start", "--foreground"], {
-          detached: true,
-          stdio: "ignore",
-          env: { ...process.env, SERVICE_PORT: "3456" }
-        });
-        
-        startProcess.on("error", (error) => {
-          console.error("Failed to start service:", error);
-          process.exit(1);
-        });
-        
-        startProcess.unref();
-        
-        // Wait a moment for the service to start
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        if (isServiceRunning()) {
-          console.log("✅ Service started successfully in the background.");
-          console.log("🌐 Web UI available at http://localhost:3457/ui");
-        } else {
-          console.error("❌ Failed to start service.");
-          process.exit(1);
-        }
-      }
+      run();
       break;
     case "stop":
       try {
@@ -143,7 +112,9 @@ async function main() {
         startProcess.unref();
 
         if (await waitForService()) {
-          executeCodeCommand(process.argv.slice(3));
+          // Join all code arguments into a single string to preserve spaces within quotes
+          const codeArgs = process.argv.slice(3);
+          executeCodeCommand(codeArgs);
         } else {
           console.error(
             "Service startup timeout, please manually run `ccr start` to start the service"
@@ -151,10 +122,13 @@ async function main() {
           process.exit(1);
         }
       } else {
-        executeCodeCommand(process.argv.slice(3));
+        // Join all code arguments into a single string to preserve spaces within quotes
+        const codeArgs = process.argv.slice(3);
+        executeCodeCommand(codeArgs);
       }
       break;
     case "ui":
+      // Check if service is running
       if (!isServiceRunning()) {
         console.log("Service not running, starting service...");
         const cliPath = join(__dirname, "cli.js");
@@ -170,51 +144,104 @@ async function main() {
 
         startProcess.unref();
 
-        if (await waitForService()) {
-          console.log("🌐 Opening configuration interface at http://localhost:3457/ui");
-          console.log("📝 Configure your providers and routing rules through the web interface");
-          
-          // Try to open in browser
+        if (!(await waitForService())) {
+          // If service startup fails, try to start with default config
+          console.log(
+            "Service startup timeout, trying to start with default configuration..."
+          );
+          const {
+            initDir,
+            writeConfigFile,
+            backupConfigFile,
+          } = require("./utils");
+
           try {
-            const { exec } = require("child_process");
-            const url = "http://localhost:3457/ui";
-            const platform = process.platform;
-            
-            if (platform === "darwin") {
-              exec(`open "${url}"`);
-            } else if (platform === "win32") {
-              exec(`start "${url}"`);
-            } else {
-              exec(`xdg-open "${url}"`);
+            // Initialize directories
+            await initDir();
+
+            // Backup existing config file if it exists
+            const backupPath = await backupConfigFile();
+            if (backupPath) {
+              console.log(
+                `Backed up existing configuration file to ${backupPath}`
+              );
             }
-          } catch (error) {
-            console.log("Could not automatically open browser. Please visit the URL manually.");
+
+            // Create a minimal default config file
+            await writeConfigFile({
+              PORT: 3456,
+              Providers: [],
+              Router: {},
+            });
+            console.log(
+              "Created minimal default configuration file at ~/.claude-code-router/config.json"
+            );
+            console.log(
+              "Please edit this file with your actual configuration."
+            );
+
+            // Try starting the service again
+            const restartProcess = spawn("node", [cliPath, "start"], {
+              detached: true,
+              stdio: "ignore",
+            });
+
+            restartProcess.on("error", (error) => {
+              console.error(
+                "Failed to start service with default config:",
+                error.message
+              );
+              process.exit(1);
+            });
+
+            restartProcess.unref();
+
+            if (!(await waitForService(15000))) {
+              // Wait a bit longer for the first start
+              console.error(
+                "Service startup still failing. Please manually run `ccr start` to start the service and check the logs."
+              );
+              process.exit(1);
+            }
+          } catch (error: any) {
+            console.error(
+              "Failed to create default configuration:",
+              error.message
+            );
+            process.exit(1);
           }
-        } else {
-          console.error("Service startup timeout, please manually run `ccr start` first");
-          process.exit(1);
-        }
-      } else {
-        console.log("🌐 Configuration interface available at http://localhost:3457/ui");
-        console.log("📝 Configure your providers and routing rules through the web interface");
-        
-        // Try to open in browser
-        try {
-          const { exec } = require("child_process");
-          const url = "http://localhost:3457/ui";
-          const platform = process.platform;
-          
-          if (platform === "darwin") {
-            exec(`open "${url}"`);
-          } else if (platform === "win32") {
-            exec(`start "${url}"`);
-          } else {
-            exec(`xdg-open "${url}"`);
-          }
-        } catch (error) {
-          console.log("Could not automatically open browser. Please visit the URL manually.");
         }
       }
+
+      // Get service info and open UI
+      const serviceInfo = await getServiceInfo();
+      const uiUrl = `${serviceInfo.endpoint}/ui/`;
+      console.log(`Opening UI at ${uiUrl}`);
+
+      // Open URL in browser based on platform
+      const platform = process.platform;
+      let openCommand = "";
+
+      if (platform === "win32") {
+        // Windows
+        openCommand = `start ${uiUrl}`;
+      } else if (platform === "darwin") {
+        // macOS
+        openCommand = `open ${uiUrl}`;
+      } else if (platform === "linux") {
+        // Linux
+        openCommand = `xdg-open ${uiUrl}`;
+      } else {
+        console.error("Unsupported platform for opening browser");
+        process.exit(1);
+      }
+
+      exec(openCommand, (error) => {
+        if (error) {
+          console.error("Failed to open browser:", error.message);
+          process.exit(1);
+        }
+      });
       break;
     case "-v":
     case "version":
