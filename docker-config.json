@@ -38,7 +38,6 @@
     "longContextThreshold": 60000,
     "webSearch": "OpenRouter,z-ai/glm-4.5-air"
   },
-  "APIKEY": "docker-api-key",
   "HOST": "0.0.0.0",
   "API_TIMEOUT_MS": 600000,
   "LOG": true,

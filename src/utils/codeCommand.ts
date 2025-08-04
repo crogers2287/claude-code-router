@@ -11,6 +11,7 @@ export async function executeCodeCommand(args: string[] = []) {
   const config = await readConfigFile();
   const env = {
     ...process.env,
+    ANTHROPIC_AUTH_TOKEN: "test", // Default auth token for router
     ANTHROPIC_BASE_URL: `http://127.0.0.1:${config.PORT || 3456}`,
     API_TIMEOUT_MS: String(config.API_TIMEOUT_MS ?? 600000), // Default to 10 minutes if not set
   };
