@@ -12,18 +12,23 @@
 
 ## ✨ Features
 
-- **Model Routing**: Route requests to different models based on your needs (e.g., background tasks, thinking, long context).
-- **Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, and SiliconFlow.
-- **Request/Response Transformation**: Customize requests and responses for different providers using transformers.
-- **Dynamic Model Switching**: Switch models on-the-fly within Claude Code using the `/model` command.
-- **GitHub Actions Integration**: Trigger Claude Code tasks in your GitHub workflows.
-- **Plugin System**: Extend functionality with custom transformers.
+- **🎯 Intelligent Model Routing**: Route requests to different models based on your needs (e.g., background tasks, thinking, long context, web search).
+- **🌐 Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, SiliconFlow, and more.
+- **⚡ Request/Response Transformation**: Customize requests and responses for different providers using transformers.
+- **🔄 Dynamic Model Switching**: Switch models on-the-fly within Claude Code using the `/model` command.
+- **🖥️ Modern Web UI**: Comprehensive web interface for configuration and management with real-time testing.
+- **🔧 System Settings**: Claude executable discovery and management with hot-reload capability.
+- **📤📥 Smart Import/Export**: Backup and share configurations with intelligent merging.
+- **🐳 Docker Support**: Easy deployment with automated Docker installation.
+- **🤖 GitHub Actions Integration**: Trigger Claude Code tasks in your GitHub workflows.
+- **🔌 Plugin System**: Extend functionality with custom transformers.
+- **📊 Status Monitoring**: Enhanced status command showing Claude executable information and service details.
 
 ## 🚀 Getting Started
 
-### 🐳 Quick Start with Docker (Recommended)
+### 🚀 Quick Start with Automated Installation
 
-For the easiest setup, use our automated Docker installation:
+For the easiest setup, use our intelligent installation script that automatically handles both Docker and local installations:
 
 ```bash
 # Clone the repository
@@ -35,26 +40,29 @@ chmod +x install.sh
 ./install.sh
 ```
 
-The installer will:
-- ✅ Check prerequisites (Docker, Docker Compose)
-- ✅ Build the Docker image with Claude Code pre-installed
-- ✅ Create the `ccr` command on your system
-- ✅ Start both the router service (port 3456) and WebUI (port 3457)
-- ✅ Handle partial installations and conflicts automatically
+**The installer intelligently:**
+- 🔍 **Auto-detects your environment** - Chooses between Docker and local installation
+- 🧹 **Cleans up conflicts** - Removes existing Docker containers automatically  
+- 📦 **Installs dependencies** - Claude Code, Node.js packages, and build tools
+- 🏗️ **Builds the project** - Server and modern WebUI with enhanced features
+- ⚙️ **Configures the system** - Creates `ccr` command and configuration files
+- 🔧 **System integration** - Optional systemd service installation on Linux
+- ✅ **Validates installation** - Comprehensive verification and troubleshooting
 
-**Available Commands:**
+**Enhanced Commands:**
 ```bash
 ccr start      # Start the router service
-ccr stop       # Stop the router service
-ccr config     # Open WebUI configuration (http://localhost:3457/ui)
+ccr stop       # Stop the router service  
+ccr restart    # Restart the service with hot config reload
+ccr status     # Enhanced status with Claude executable info
+ccr ui         # Open WebUI configuration (http://localhost:3457/ui)
 ccr code       # Run Claude Code through the router
-ccr logs       # View service logs
-ccr status     # Check service status
 ```
 
-**Uninstall:**
+**System Management:**
 ```bash
-./uninstall.sh  # Removes everything (with option to keep config)
+./uninstall.sh  # Clean removal with config preservation option
+ccr status      # Shows Claude executable path, version, and source
 ```
 
 ### 📦 Manual Installation
@@ -228,24 +236,46 @@ ccr ui
 
 This will open a web-based interface where you can easily manage providers, configure routing rules, and test your setup.
 
-#### 🎯 Enhanced Web UI Features
+#### 🎯 Modern Web UI Features
 
-- **🔧 Visual Provider Management**: Add, edit, and remove providers with a user-friendly interface
-- **📊 Router Configuration**: Set up routing rules for different scenarios (default, background, thinking, long context, web search)
-- **🧪 Real-time Testing**: Test your configuration directly from the UI
-- **⚡ Command Generator**: Generate `ccr code` commands with custom model selection
-- **🦙 Ollama Integration**: Automatic model discovery for Ollama instances
-  - Detects Ollama URLs automatically (localhost:11434, etc.)
-  - One-click model discovery from your Ollama installation
-  - Beautiful model selection interface with visual indicators
-- **📤📥 Configuration Export/Import**: Backup and share your configurations
-  - Export complete configuration or providers only
-  - Import with smart merging (avoids duplicates)
-  - Automatic backup before importing
-- **🔍 Enhanced Model Validation**: Support for modern model names
-  - Allows periods (e.g., `glm-4.5`, `qwen2.5-coder`)
-  - Supports namespaced models (e.g., `anthropic/claude-3.5-sonnet`)
-  - Version tags (e.g., `model:latest`, `model:v1.0`)
+**🏠 Dashboard & Navigation**
+- **Clean, modern interface** with intuitive navigation tabs
+- **Real-time status indicators** and service health monitoring  
+- **Responsive design** that works on desktop and mobile devices
+
+**🔧 Provider Management**
+- **Visual provider management** with add, edit, and remove capabilities
+- **Provider-specific import/export** for sharing provider configurations
+- **Real-time connection testing** with latency measurements
+- **Automatic model discovery** for Ollama instances
+- **Enhanced validation** supporting modern model names (periods, namespaces, versions)
+
+**⚙️ System Settings** 
+- **Claude executable auto-discovery** - Scans system for Claude installations
+- **Hot-reload capability** - Switch Claude executables without restart
+- **Configuration management** - Full config import/export with backup
+- **System status monitoring** - Shows which Claude executable is active
+
+**📊 Router Configuration**
+- **Visual routing setup** for different scenarios (default, background, thinking, long context, web search)
+- **Drag-and-drop model assignment** with visual feedback
+- **Threshold configuration** for context-based routing
+
+**🧪 Testing & Validation**
+- **Real-time provider testing** directly from the UI
+- **Connection diagnostics** with detailed error messages
+- **Latency monitoring** and performance insights
+
+**⚡ Command Generator**  
+- **Interactive command builder** with model selection
+- **Custom parameter configuration** (temperature, max tokens, streaming)
+- **Copy-to-clipboard** functionality for generated commands
+
+**📤📥 Smart Import/Export**
+- **Granular export options** - Full config, providers only, or settings only
+- **Intelligent import merging** - Avoids duplicates, preserves settings
+- **Automatic backups** before importing configurations
+- **Validation and error recovery** for corrupted files
 
 #### Screenshots
 
@@ -468,6 +498,68 @@ jobs:
 ```
 
 This setup allows for interesting automations, like running tasks during off-peak hours to reduce API costs.
+
+## 🔍 Enhanced Status & Troubleshooting
+
+### Status Command
+
+The `ccr status` command now provides comprehensive system information:
+
+```bash
+$ ccr status
+
+📊 Claude Code Router Status
+════════════════════════════════════════
+✅ Status: Running
+🆔 Process ID: 123456
+🌐 Port: 3456
+📡 API Endpoint: http://127.0.0.1:3456
+📄 PID File: ~/.claude-code-router/.claude-code-router.pid
+
+🔧 Claude Executable Configuration:
+   📍 Path: /usr/local/bin/claude
+   📦 Version: 1.0.60
+   📋 Source: persisted configuration
+
+🚀 Ready to use! Run the following commands:
+   ccr code    # Start coding with Claude
+   ccr stop   # Stop the service
+```
+
+**Status Information Includes:**
+- **Service status** - Running/stopped with process details
+- **Network configuration** - Ports and endpoints
+- **Claude executable info** - Path, version, and configuration source
+- **Quick action commands** - Next steps and common operations
+
+### Troubleshooting
+
+**Common Issues & Solutions:**
+
+1. **"401 Invalid API key" errors**
+   - Check your provider API keys in the WebUI
+   - Verify the `ccr status` shows the correct Claude executable
+   - Use the System Settings to switch Claude executables if needed
+
+2. **Service won't start**
+   - Run `ccr status` to check for port conflicts
+   - Try `ccr restart` to clean restart the service
+   - Check logs at `~/.claude-code-router/logs/`
+
+3. **WebUI not accessible**
+   - Verify service is running with `ccr status`
+   - Check if port 3457 is available
+   - Try accessing `http://localhost:3457/ui` directly
+
+4. **Configuration not updating**
+   - Use `ccr restart` after config changes
+   - Check WebUI import/export functionality
+   - Verify config file at `~/.claude-code-router/config.json`
+
+5. **Claude executable issues**
+   - Use WebUI System Settings to scan for Claude installations
+   - Verify Claude is installed: `claude --version`
+   - Check the path shown in `ccr status`
 
 ## 📝 Further Reading
 
