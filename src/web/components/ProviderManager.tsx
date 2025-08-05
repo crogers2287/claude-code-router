@@ -95,18 +95,6 @@ export const ProviderManager: React.FC<ProviderManagerProps> = ({ config, onSave
     }
   };
 
-  const exportConfig = () => {
-    const dataStr = JSON.stringify(config, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `claude-code-router-config-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   const exportProviders = () => {
     const providersData = { Providers: config.Providers };
@@ -122,42 +110,6 @@ export const ProviderManager: React.FC<ProviderManagerProps> = ({ config, onSave
     URL.revokeObjectURL(url);
   };
 
-  const importConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedConfig = JSON.parse(e.target?.result as string);
-        
-        // Validate the imported config has required structure
-        if (!importedConfig.Providers || !Array.isArray(importedConfig.Providers)) {
-          alert('Invalid configuration file: missing or invalid Providers array');
-          return;
-        }
-        
-        if (confirm('This will replace your current configuration. Are you sure you want to continue?')) {
-          // Merge with current config to preserve server settings
-          const mergedConfig = {
-            ...config,
-            ...importedConfig,
-            // Preserve critical server settings
-            APIKEY: config.APIKEY,
-            HOST: config.HOST,
-            API_TIMEOUT_MS: importedConfig.API_TIMEOUT_MS || config.API_TIMEOUT_MS
-          };
-          onSave(mergedConfig);
-        }
-      } catch (error) {
-        alert('Error parsing configuration file. Please check the file format.');
-        console.error('Import error:', error);
-      }
-    };
-    reader.readAsText(file);
-    // Reset input value so same file can be selected again
-    event.target.value = '';
-  };
 
   const importProviders = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -228,45 +180,23 @@ export const ProviderManager: React.FC<ProviderManagerProps> = ({ config, onSave
             <p>Configure LLM providers and their models</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {/* Export/Import Buttons */}
-            <div style={{ display: 'flex', gap: '0.25rem' }}>
-              <button 
-                className="btn btn-secondary btn-small" 
-                onClick={exportProviders}
-                title="Export only providers"
-              >
-                📤 Export Providers
-              </button>
-              <button 
-                className="btn btn-secondary btn-small" 
-                onClick={exportConfig}
-                title="Export complete configuration"
-              >
-                📦 Export Config
-              </button>
-            </div>
-            
-            {/* Import Buttons */}
-            <div style={{ display: 'flex', gap: '0.25rem' }}>
-              <label className="btn btn-secondary btn-small" style={{ cursor: 'pointer' }}>
-                📥 Import Providers
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importProviders}
-                  style={{ display: 'none' }}
-                />
-              </label>
-              <label className="btn btn-secondary btn-small" style={{ cursor: 'pointer' }}>
-                📦 Import Config
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importConfig}
-                  style={{ display: 'none' }}
-                />
-              </label>
-            </div>
+            {/* Provider Export/Import Buttons */}
+            <button 
+              className="btn btn-secondary btn-small" 
+              onClick={exportProviders}
+              title="Export only providers to JSON file"
+            >
+              📤 Export Providers
+            </button>
+            <label className="btn btn-secondary btn-small" style={{ cursor: 'pointer' }}>
+              📥 Import Providers
+              <input
+                type="file"
+                accept=".json"
+                onChange={importProviders}
+                style={{ display: 'none' }}
+              />
+            </label>
             
             <button 
               className="btn btn-primary" 
