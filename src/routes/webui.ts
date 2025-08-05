@@ -259,8 +259,12 @@ export async function webuiRoutes(fastify: FastifyInstance) {
   // System API endpoints for Claude executable discovery and management
   fastify.get('/api/system/scan-claude', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const result = await scanForClaudeExecutables();
-      reply.send(result);
+      const executables = await scanForClaudeExecutables();
+      reply.send({
+        success: true,
+        executables: executables,
+        total: executables.length
+      });
     } catch (error) {
       console.error('Error scanning for Claude executables:', error);
       reply.code(500).send({
@@ -283,8 +287,18 @@ export async function webuiRoutes(fastify: FastifyInstance) {
         return;
       }
 
-      const result = await validateClaudeExecutable(path);
-      reply.send(result);
+      const executable = await validateClaudeExecutable(path);
+      if (executable) {
+        reply.send({
+          success: true,
+          executable: executable
+        });
+      } else {
+        reply.send({
+          success: false,
+          error: 'Failed to validate Claude executable'
+        });
+      }
     } catch (error) {
       console.error('Error validating Claude executable:', error);
       reply.code(500).send({
