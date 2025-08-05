@@ -582,67 +582,67 @@ main() {
     local current_step=0
     
     # Step 1: System detection
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Detecting system"
     detect_system
     
     # Step 2: Prerequisites check
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Checking prerequisites"
     check_prerequisites
     
     # Step 3: Install Claude Code
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Installing Claude Code"
     install_claude_code
     
     # Step 4: Backup existing config
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Backing up existing configuration"
     backup_existing_config
     
     # Step 5: Clean up Docker installations
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Cleaning up Docker installations"
     cleanup_docker_installation
     
     # Step 6: Create directories
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Creating directories"
     create_directories
     
     # Step 7: Install dependencies
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Installing dependencies"
     install_dependencies
     
     # Step 8: Build project
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Building project"
     build_project
     
     # Step 9: Create configuration
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Creating configuration"
     create_config
     
     # Step 10: Create start script
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Creating start script"
     create_start_script
     
     # Step 11: Install ccr command
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Installing ccr command"
     install_ccr_command
     
     # Step 12: Install systemd service (optional)
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Installing systemd service"
     install_systemd_service
     
     # Step 13: Verify installation
-    ((current_step++))
+    current_step=$((current_step + 1))
     show_progress $current_step $total_steps "Verifying installation"
     
     if verify_installation; then
