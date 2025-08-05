@@ -3,6 +3,12 @@ import { readFile, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { 
+  scanForClaudeExecutables, 
+  validateClaudeExecutable, 
+  testClaudeExecutable,
+  updateClaudePath 
+} from '../utils/system';
 
 const CONFIG_DIR = join(homedir(), '.claude-code-router');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -245,6 +251,93 @@ export async function webuiRoutes(fastify: FastifyInstance) {
       reply.code(500).send({ 
         success: false, 
         error: 'Failed to fetch models',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // System API endpoints for Claude executable discovery and management
+  fastify.get('/api/system/scan-claude', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const result = await scanForClaudeExecutables();
+      reply.send(result);
+    } catch (error) {
+      console.error('Error scanning for Claude executables:', error);
+      reply.code(500).send({
+        success: false,
+        error: 'Failed to scan for Claude executables',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  fastify.post('/api/system/validate-claude', async (request: ConfigRequest, reply: FastifyReply) => {
+    try {
+      const { path } = request.body;
+      
+      if (!path || typeof path !== 'string') {
+        reply.code(400).send({
+          success: false,
+          error: 'Path is required and must be a string'
+        });
+        return;
+      }
+
+      const result = await validateClaudeExecutable(path);
+      reply.send(result);
+    } catch (error) {
+      console.error('Error validating Claude executable:', error);
+      reply.code(500).send({
+        success: false,
+        error: 'Failed to validate Claude executable',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  fastify.post('/api/system/test-claude', async (request: ConfigRequest, reply: FastifyReply) => {
+    try {
+      const { path } = request.body;
+      
+      if (!path || typeof path !== 'string') {
+        reply.code(400).send({
+          success: false,
+          error: 'Path is required and must be a string'
+        });
+        return;
+      }
+
+      const result = await testClaudeExecutable(path);
+      reply.send(result);
+    } catch (error) {
+      console.error('Error testing Claude executable:', error);
+      reply.code(500).send({
+        success: false,
+        error: 'Failed to test Claude executable',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  fastify.post('/api/system/reload-claude-path', async (request: ConfigRequest, reply: FastifyReply) => {
+    try {
+      const { path } = request.body;
+      
+      if (!path || typeof path !== 'string') {
+        reply.code(400).send({
+          success: false,
+          error: 'Path is required and must be a string'
+        });
+        return;
+      }
+
+      const result = await updateClaudePath(path);
+      reply.send(result);
+    } catch (error) {
+      console.error('Error reloading Claude path:', error);
+      reply.code(500).send({
+        success: false,
+        error: 'Failed to reload Claude path',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
