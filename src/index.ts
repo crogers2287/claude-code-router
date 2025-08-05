@@ -141,31 +141,10 @@ async function run(options: RunOptions = {}) {
     console.error("Error code:", error.code);
   }
   
-  // Create a mutable config reference for hot reloading
-  const configRef = { current: config };
-
-  server.addHook("preHandler", async (req: any, reply: any) => {
-    // Use the current config for auth
-    await apiKeyAuth(configRef.current)(req, reply);
-  });
+  server.addHook("preHandler", apiKeyAuth(config));
   server.addHook("preHandler", async (req: any, reply: any) => {
     if(req.url.startsWith("/v1/messages")) {
-      router(req, reply, configRef.current)
-    }
-  });
-
-  // Handle SIGHUP to reload configuration (after server is created)
-  process.on("SIGHUP", async () => {
-    console.log("🔄 Received SIGHUP, reloading configuration...");
-    try {
-      const newConfig = await initConfig();
-      
-      // Update the config reference
-      configRef.current = newConfig;
-      
-      console.log("✅ Configuration reloaded successfully");
-    } catch (error) {
-      console.error("❌ Failed to reload configuration:", error);
+      router(req, reply, config)
     }
   });
   

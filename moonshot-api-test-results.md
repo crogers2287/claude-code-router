@@ -3,7 +3,7 @@
 ## Configuration Details
 
 - **API Base URL**: `https://api.moonshot.ai/v1/chat/completions`
-- **API Key**: `sk-VugyuuGpqxgvRRXABcLjO1dpH7uJESdFwP9hfJDCvnF5wnAZ`
+- **API Key**: `sk-xxx... (removed for security)`
 - **Model**: `kimi-k2-0711-preview`
 
 ## Issues Identified and Fixed
@@ -71,7 +71,7 @@ The corrected configuration in `~/.claude-code-router/config.json`:
     {
       "name": "moonshot",
       "api_base_url": "https://api.moonshot.ai/v1/chat/completions",
-      "api_key": "sk-VugyuuGpqxgvRRXABcLjO1dpH7uJESdFwP9hfJDCvnF5wnAZ",
+      "api_key": "YOUR_MOONSHOT_API_KEY_HERE",
       "models": [
         "kimi-k2-0711-preview"
       ],

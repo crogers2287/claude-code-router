@@ -5,27 +5,24 @@ import {
 } from "./processCheck";
 import { closeService } from "./close";
 import { readConfigFile } from ".";
+import { loadPersistedClaudePath } from "./system";
 
 export async function executeCodeCommand(args: string[] = []) {
   // Set environment variables
   const config = await readConfigFile();
   const env = {
     ...process.env,
-    ANTHROPIC_AUTH_TOKEN: "test",
+    ANTHROPIC_AUTH_TOKEN: config.APIKEY || "test",
     ANTHROPIC_BASE_URL: `http://127.0.0.1:${config.PORT || 3456}`,
     API_TIMEOUT_MS: String(config.API_TIMEOUT_MS ?? 600000), // Default to 10 minutes if not set
   };
 
-  if (config?.APIKEY) {
-    env.ANTHROPIC_API_KEY = config.APIKEY;
-    delete env.ANTHROPIC_AUTH_TOKEN;
-  }
-
   // Increment reference count when command starts
   incrementReferenceCount();
 
-  // Execute claude command
-  const claudePath = process.env.CLAUDE_PATH || "claude";
+  // Execute claude command - use persisted path, then env var, then default
+  const persistedPath = await loadPersistedClaudePath();
+  const claudePath = persistedPath || process.env.CLAUDE_PATH || "claude";
   const claudeProcess = spawn(claudePath, args, {
     env,
     stdio: "inherit",
