@@ -92,7 +92,7 @@ export async function scanForClaudeExecutables(): Promise<ClaudeExecutable[]> {
   for (const candidatePath of uniqueCandidates) {
     try {
       const executable = await validateClaudeExecutable(candidatePath);
-      if (executable) {
+      if (executable && executable.isValid) {
         results.push(executable);
       }
     } catch (error) {
@@ -356,4 +356,40 @@ export async function loadPersistedClaudePath(): Promise<string | null> {
   }
   
   return null;
+}
+
+/**
+ * Gets the current Claude executable path being used by ccr
+ */
+export async function getCurrentClaudePath(): Promise<{ path: string; source: string; version?: string }> {
+  // Check persisted path first
+  const persistedPath = await loadPersistedClaudePath();
+  if (persistedPath) {
+    const executable = await validateClaudeExecutable(persistedPath);
+    return {
+      path: persistedPath,
+      source: 'persisted configuration',
+      version: executable?.version
+    };
+  }
+
+  // Check environment variable
+  const envPath = process.env.CLAUDE_PATH;
+  if (envPath) {
+    const executable = await validateClaudeExecutable(envPath);
+    return {
+      path: envPath,
+      source: 'CLAUDE_PATH environment variable',
+      version: executable?.version
+    };
+  }
+
+  // Fall back to default "claude" command
+  const defaultPath = "claude";
+  const executable = await validateClaudeExecutable(defaultPath);
+  return {
+    path: defaultPath,
+    source: 'system PATH',
+    version: executable?.version
+  };
 }
